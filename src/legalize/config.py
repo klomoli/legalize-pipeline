@@ -78,7 +78,11 @@ class Config:
     countries: dict[str, CountryConfig] = field(default_factory=dict)
 
     def get_country(self, code: str) -> CountryConfig:
-        """Get config for a country, with legacy fallback for ES."""
+        """Get config for a country.
+
+        Looks up the countries: section first. Falls back to legacy
+        flat config fields for the default country (self.country).
+        """
         if code in self.countries:
             cc = self.countries[code]
             if not cc.state_path:
@@ -86,26 +90,14 @@ class Config:
             if not cc.mappings_path:
                 cc.mappings_path = f".pipeline/{code}/mappings.json"
             return cc
-        # Legacy fallback: construct from flat config fields
-        if code == "es":
+        # Legacy fallback: use flat config fields for the default country
+        if code == self.country:
             return CountryConfig(
                 repo_path=self.git.repo_path,
                 data_dir=self.data_dir,
                 cache_dir=self.cache_dir,
                 state_path=self.state_path,
                 mappings_path=self.mappings_path,
-                source={
-                    "base_url": self.boe.base_url,
-                    "requests_per_second": self.boe.requests_per_second,
-                    "request_timeout": self.boe.request_timeout,
-                    "max_retries": self.boe.max_retries,
-                },
-            )
-        if code == "fr":
-            return CountryConfig(
-                repo_path=self.git.repo_path.replace("es", "fr"),
-                data_dir=self.data_dir.replace("data", "data-fr"),
-                source={"legi_dir": self.legi_dir},
             )
         raise ValueError(
             f"Country '{code}' not configured. "
