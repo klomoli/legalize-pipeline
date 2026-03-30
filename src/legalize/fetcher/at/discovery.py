@@ -6,7 +6,7 @@ from collections.abc import Iterator
 from datetime import date
 
 from legalize.fetcher.base import LegislativeClient, NormDiscovery
-from legalize.fetcher.client_ris import RISClient
+from legalize.fetcher.at.client import RISClient
 
 
 class RISDiscovery(NormDiscovery):
