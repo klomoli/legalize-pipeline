@@ -1,7 +1,7 @@
 """Tests for the BOE sumario parser."""
 
 from legalize.config import ScopeConfig
-from legalize.fetcher.sumario import parse_sumario
+from legalize.fetcher.es.sumario import parse_sumario
 from legalize.models import Rango
 
 # Minimal XML that replicates the real BOE sumario structure

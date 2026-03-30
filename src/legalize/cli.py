@@ -413,9 +413,9 @@ def status(ctx: click.Context) -> None:
 
     console.print("[bold]Legalize pipeline status[/bold]\n")
     console.print(f"  Downloaded norms (data/): {fetched}")
-    console.print(f"  Committed norms: {state.normas_count}")
+    console.print(f"  Committed norms: {state.norms_count}")
     console.print(f"  Registered mappings: {len(mappings)}")
-    console.print(f"  Last processed summary: {state.ultimo_sumario or '[dim]none[/dim]'}")
+    console.print(f"  Last processed summary: {state.last_summary_date or '[dim]none[/dim]'}")
 
     # Show per-country stats if configured
     if config.countries:
@@ -427,90 +427,3 @@ def status(ctx: click.Context) -> None:
                 console.print(f"  {code}: {count} norms in {cc.data_dir}")
 
 
-# ─────────────────────────────────────────────
-# DEPRECATED ALIASES (hidden, show warning)
-# ─────────────────────────────────────────────
-
-
-@cli.command("fetch-fr", hidden=True)
-@click.argument("norm_ids", nargs=-1)
-@click.option("--discover", "discover_flag", is_flag=True)
-@click.option("--force", is_flag=True)
-@click.option("--legi-dir", default=None)
-@click.option("--data-dir", default=None)
-@click.pass_context
-def fetch_fr_compat(ctx, norm_ids, discover_flag, force, legi_dir, data_dir):
-    """[Deprecated] Use: legalize fetch -c fr"""
-    console.print("[yellow]Deprecated: use 'legalize fetch -c fr'[/yellow]")
-    ctx.invoke(
-        fetch,
-        norm_ids=norm_ids,
-        country="fr",
-        fetch_all_flag=discover_flag,
-        catalog=False,
-        force=force,
-        data_dir=data_dir,
-        legi_dir=legi_dir,
-        limit=None,
-    )
-
-
-@cli.command("fetch-se", hidden=True)
-@click.argument("sfs_numbers", nargs=-1)
-@click.option("--discover", "discover_flag", is_flag=True)
-@click.option("--force", is_flag=True)
-@click.option("--data-dir", default=None)
-@click.pass_context
-def fetch_se_compat(ctx, sfs_numbers, discover_flag, force, data_dir):
-    """[Deprecated] Use: legalize fetch -c se"""
-    console.print("[yellow]Deprecated: use 'legalize fetch -c se'[/yellow]")
-    ctx.invoke(
-        fetch,
-        norm_ids=sfs_numbers,
-        country="se",
-        fetch_all_flag=discover_flag,
-        catalog=False,
-        force=force,
-        data_dir=data_dir,
-        legi_dir=None,
-        limit=None,
-    )
-
-
-@cli.command("bootstrap-fr", hidden=True)
-@click.option("--legi-dir", required=True)
-@click.option("--repo-path", default="../fr")
-@click.option("--data-dir", default="../data-fr")
-@click.option("--dry-run", is_flag=True)
-@click.pass_context
-def bootstrap_fr_compat(ctx, legi_dir, repo_path, data_dir, dry_run):
-    """[Deprecated] Use: legalize bootstrap -c fr"""
-    console.print("[yellow]Deprecated: use 'legalize bootstrap -c fr'[/yellow]")
-    ctx.invoke(
-        bootstrap,
-        country="fr",
-        repo_path=repo_path,
-        data_dir=data_dir,
-        legi_dir=legi_dir,
-        xml_path=None,
-        dry_run=dry_run,
-    )
-
-
-@cli.command("bootstrap-se", hidden=True)
-@click.option("--repo-path", default="../se")
-@click.option("--data-dir", default="../data-se")
-@click.option("--dry-run", is_flag=True)
-@click.pass_context
-def bootstrap_se_compat(ctx, repo_path, data_dir, dry_run):
-    """[Deprecated] Use: legalize bootstrap -c se"""
-    console.print("[yellow]Deprecated: use 'legalize bootstrap -c se'[/yellow]")
-    ctx.invoke(
-        bootstrap,
-        country="se",
-        repo_path=repo_path,
-        data_dir=data_dir,
-        legi_dir=None,
-        xml_path=None,
-        dry_run=dry_run,
-    )

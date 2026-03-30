@@ -3,7 +3,7 @@
 from datetime import date
 
 from legalize.models import EstadoNorma, Rango
-from legalize.transformer.metadata import parse_metadatos
+from legalize.fetcher.es.metadata import parse_metadatos
 
 # Real XML from the Constitution (captured from the API)
 CONSTITUCION_META_XML = b"""<?xml version="1.0" encoding="utf-8"?>

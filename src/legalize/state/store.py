@@ -86,14 +86,14 @@ class StateStore:
         logger.debug("State saved to %s", self._path)
 
     @property
-    def ultimo_sumario(self) -> Optional[date]:
-        """Date of the last processed summary. Legacy property name kept for compat."""
+    def last_summary_date(self) -> Optional[date]:
+        """Date of the last processed summary."""
         if self._last_summary:
             return date.fromisoformat(self._last_summary)
         return None
 
-    @ultimo_sumario.setter
-    def ultimo_sumario(self, value: date) -> None:
+    @last_summary_date.setter
+    def last_summary_date(self, value: date) -> None:
         self._last_summary = value.isoformat()
 
     def is_norma_processed(self, norm_id: str, target_date: date) -> bool:
@@ -112,21 +112,21 @@ class StateStore:
 
     def record_run(
         self,
-        sumarios: list[str] | None = None,
+        summaries: list[str] | None = None,
         commits: int = 0,
-        errores: list[str] | None = None,
+        errors: list[str] | None = None,
     ) -> None:
-        """Record a pipeline run. Parameter names kept for caller compat."""
+        """Record a pipeline run."""
         self._runs.append(RunRecord(
             timestamp=datetime.now().isoformat(),
-            summaries_reviewed=sumarios or [],
+            summaries_reviewed=summaries or [],
             commits_created=commits,
-            errors=errores or [],
+            errors=errors or [],
         ))
 
-    def get_norma_state(self, norm_id: str) -> Optional[NormState]:
+    def get_norm_state(self, norm_id: str) -> Optional[NormState]:
         return self._norms.get(norm_id)
 
     @property
-    def normas_count(self) -> int:
+    def norms_count(self) -> int:
         return len(self._norms)

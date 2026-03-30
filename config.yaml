@@ -35,14 +35,3 @@ countries:
     data_dir: "../data-se"
     max_workers: 1
     source: {}  # Riksdagen API, no config needed
-
-# Legacy fields (kept for backward compatibility with old scripts)
-boe:
-  base_url: "https://www.boe.es/datosabiertos"
-  request_timeout: 30
-  max_retries: 5
-  requests_per_second: 2.0
-
-scope:
-  rangos: []
-  normas_fijas: []

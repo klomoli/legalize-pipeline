@@ -106,20 +106,11 @@ class TestCountryConfig:
         assert result.repo_path == "../se"
         assert result.data_dir == "../data-se"
 
-    def test_get_country_legacy_fallback(self):
-        """Config without countries section falls back for default country."""
-        config = Config(
-            country="es",
-            git=MagicMock(repo_path="../es"),
-            data_dir="../data",
-            cache_dir=".cache",
-            state_path=".pipeline/state.json",
-            mappings_path=".pipeline/mappings.json",
-        )
-        result = config.get_country("es")
-        assert result.repo_path == "../es"
-        assert result.data_dir == "../data"
-        assert result.cache_dir == ".cache"
+    def test_get_country_without_countries_section_raises(self):
+        """Config without countries section raises ValueError."""
+        config = Config()
+        with pytest.raises(ValueError, match="not configured"):
+            config.get_country("es")
 
     def test_get_country_unknown_raises(self):
         """Requesting unknown country raises ValueError."""
@@ -349,8 +340,8 @@ class TestStateStoreCompat:
         store = StateStore(state_path)
         store.load()
 
-        assert store.ultimo_sumario == date(2024, 3, 15)
-        ns = store.get_norma_state("BOE-A-1978-31229")
+        assert store.last_summary_date == date(2024, 3, 15)
+        ns = store.get_norm_state("BOE-A-1978-31229")
         assert ns is not None
         assert ns.last_version_applied == "2024-02-17"
         assert ns.total_versions_applied == 12
@@ -359,7 +350,7 @@ class TestStateStoreCompat:
         """Save state, read raw JSON, verify keys are English."""
         state_path = tmp_path / "state.json"
         store = StateStore(state_path)
-        store.ultimo_sumario = date(2024, 6, 1)
+        store.last_summary_date = date(2024, 6, 1)
         store.mark_norma_processed("TEST-001", date(2024, 6, 1), 3)
         store.save()
 
@@ -377,17 +368,17 @@ class TestStateStoreCompat:
         state_path = tmp_path / "state.json"
 
         store1 = StateStore(state_path)
-        store1.ultimo_sumario = date(2024, 7, 1)
+        store1.last_summary_date = date(2024, 7, 1)
         store1.mark_norma_processed("ROUND-001", date(2024, 7, 1), 5)
-        store1.record_run(sumarios=["2024-07-01"], commits=10, errores=["minor issue"])
+        store1.record_run(summaries=["2024-07-01"], commits=10, errors=["minor issue"])
         store1.save()
 
         store2 = StateStore(state_path)
         store2.load()
 
-        assert store2.ultimo_sumario == date(2024, 7, 1)
-        assert store2.normas_count == 1
-        ns = store2.get_norma_state("ROUND-001")
+        assert store2.last_summary_date == date(2024, 7, 1)
+        assert store2.norms_count == 1
+        ns = store2.get_norm_state("ROUND-001")
         assert ns is not None
         assert ns.total_versions_applied == 5
 

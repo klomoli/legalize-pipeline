@@ -48,8 +48,8 @@ def fetch_one(config: Config, boe_id: str, force: bool = False) -> NormaCompleta
     Returns NormaCompleta or None on error.
     """
     from legalize.fetcher.cache import FileCache
-    from legalize.fetcher.client import BOEClient
-    from legalize.transformer.metadata import parse_metadatos
+    from legalize.fetcher.es.client import BOEClient
+    from legalize.fetcher.es.metadata import parse_metadatos
 
     json_path = Path(config.data_dir) / "json" / f"{boe_id}.json"
     if json_path.exists() and not force:
@@ -192,7 +192,7 @@ def fetch_catalog_ccaa(config: Config, jurisdiccion: str, force: bool = False) -
     """
     import requests
 
-    from legalize.transformer.metadata import _DEPT_TO_JURISDICCION
+    from legalize.fetcher.es.metadata import _DEPT_TO_JURISDICCION
 
     # Reverse lookup: jurisdiccion → all matching departamento codes
     dept_codes = [code for code, jur in _DEPT_TO_JURISDICCION.items() if jur == jurisdiccion]
@@ -600,9 +600,9 @@ def daily(
     from datetime import timedelta
 
     from legalize.fetcher.cache import FileCache
-    from legalize.fetcher.client import BOEClient
-    from legalize.fetcher.sumario import parse_sumario
-    from legalize.transformer.metadata import parse_metadatos
+    from legalize.fetcher.es.client import BOEClient
+    from legalize.fetcher.es.sumario import parse_sumario
+    from legalize.fetcher.es.metadata import parse_metadatos
 
     cache = FileCache(config.cache_dir)
     state = StateStore(config.state_path)
@@ -613,7 +613,7 @@ def daily(
     if target_date:
         dates_to_process = [target_date]
     else:
-        start = state.ultimo_sumario
+        start = state.last_summary_date
         if start is None:
             console.print("[yellow]No last summary found. Use --date or run bootstrap.[/yellow]")
             return 0
@@ -700,7 +700,7 @@ def daily(
                     logger.error(msg, exc_info=True)
                     errors.append(msg)
 
-            state.ultimo_sumario = current_date
+            state.last_summary_date = current_date
 
     if not dry_run and config.git.push and commits_created > 0:
         try:
@@ -710,9 +710,9 @@ def daily(
             errors.append("Error pushing")
 
     state.record_run(
-        sumarios=[d.isoformat() for d in dates_to_process],
+        summaries=[d.isoformat() for d in dates_to_process],
         commits=commits_created,
-        errores=errors,
+        errors=errors,
     )
     state.save()
     mappings.save()

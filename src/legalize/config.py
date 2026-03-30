@@ -78,31 +78,18 @@ class Config:
     countries: dict[str, CountryConfig] = field(default_factory=dict)
 
     def get_country(self, code: str) -> CountryConfig:
-        """Get config for a country.
-
-        Looks up the countries: section first. Falls back to legacy
-        flat config fields for the default country (self.country).
-        """
-        if code in self.countries:
-            cc = self.countries[code]
-            if not cc.state_path:
-                cc.state_path = f".pipeline/{code}/state.json"
-            if not cc.mappings_path:
-                cc.mappings_path = f".pipeline/{code}/mappings.json"
-            return cc
-        # Legacy fallback: use flat config fields for the default country
-        if code == self.country:
-            return CountryConfig(
-                repo_path=self.git.repo_path,
-                data_dir=self.data_dir,
-                cache_dir=self.cache_dir,
-                state_path=self.state_path,
-                mappings_path=self.mappings_path,
+        """Get config for a country from the countries: section."""
+        if code not in self.countries:
+            raise ValueError(
+                f"Country '{code}' not configured. "
+                f"Add it to the 'countries' section of config.yaml."
             )
-        raise ValueError(
-            f"Country '{code}' not configured. "
-            f"Add it to the 'countries' section of config.yaml."
-        )
+        cc = self.countries[code]
+        if not cc.state_path:
+            cc.state_path = f".pipeline/{code}/state.json"
+        if not cc.mappings_path:
+            cc.mappings_path = f".pipeline/{code}/mappings.json"
+        return cc
 
 
 def _parse_date(value: str | None) -> Optional[date]:

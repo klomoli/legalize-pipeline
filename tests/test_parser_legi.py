@@ -18,7 +18,7 @@ from datetime import date
 
 from lxml import etree
 
-from legalize.fetcher.parser_legi import (
+from legalize.fetcher.fr.parser import (
     LEGIMetadataParser,
     LEGITextParser,
     _extract_text_legi,
@@ -430,12 +430,12 @@ class TestCountriesDispatch:
 
     def test_get_client_class_fr(self):
         from legalize.countries import get_client_class
-        from legalize.fetcher.client_legi import LEGIClient
+        from legalize.fetcher.fr.client import LEGIClient
         assert get_client_class("fr") is LEGIClient
 
     def test_get_discovery_class_fr(self):
         from legalize.countries import get_discovery_class
-        from legalize.fetcher.discovery_legi import LEGIDiscovery
+        from legalize.fetcher.fr.discovery import LEGIDiscovery
         assert get_discovery_class("fr") is LEGIDiscovery
 
 
@@ -470,17 +470,17 @@ class TestSlugFR:
 
 class TestIdToSubpath:
     def test_legitext(self):
-        from legalize.fetcher.client_legi import _id_to_subpath
+        from legalize.fetcher.fr.client import _id_to_subpath
         result = _id_to_subpath("LEGITEXT000006071194")
         # Only 5 digit pairs in the path (first 10 of 12)
         assert result == "LEGI/TEXT/00/00/06/07/11/LEGITEXT000006071194.xml"
 
     def test_legiarti(self):
-        from legalize.fetcher.client_legi import _id_to_subpath
+        from legalize.fetcher.fr.client import _id_to_subpath
         result = _id_to_subpath("LEGIARTI000006527453")
         assert result == "LEGI/ARTI/00/00/06/52/74/LEGIARTI000006527453.xml"
 
     def test_legiscta(self):
-        from legalize.fetcher.client_legi import _id_to_subpath
+        from legalize.fetcher.fr.client import _id_to_subpath
         result = _id_to_subpath("LEGISCTA000006083836")
         assert result == "LEGI/SCTA/00/00/06/08/38/LEGISCTA000006083836.xml"
