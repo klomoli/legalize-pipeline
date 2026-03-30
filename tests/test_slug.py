@@ -48,3 +48,22 @@ class TestNormaToFilepath:
         meta1 = _make_metadata("BOE-A-1978-31229", rango=Rango.CONSTITUCION)
         meta2 = _make_metadata("BOE-A-1978-31229", rango=Rango.LEY)
         assert norm_to_filepath(meta1) == norm_to_filepath(meta2)
+
+    def test_flat_structure_no_subdirectories(self):
+        """All paths must be exactly one level deep: {dir}/{file}.md"""
+        countries = [
+            ("BOE-A-2024-1", "es", None),
+            ("JORF-001", "fr", None),
+            ("SFS-1962-700", "se", None),
+            ("AT-10002333", "at", None),
+            ("BOE-A-2020-615", "es", "es-pv"),
+        ]
+        for identifier, country, jurisdiction in countries:
+            meta = _make_metadata(identifier, pais=country, jurisdiccion=jurisdiction)
+            path = norm_to_filepath(meta)
+            parts = path.split("/")
+            assert len(parts) == 2, (
+                f"Path must be flat (dir/file.md), got {len(parts)} levels: {path}"
+            )
+            assert parts[1].endswith(".md"), f"File must end with .md: {path}"
+            assert ".." not in path, f"Path must not contain '..': {path}"

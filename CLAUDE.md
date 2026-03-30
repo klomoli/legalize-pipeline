@@ -137,7 +137,17 @@ Multi-country ready. Key types:
 
 ## Output Format (FINAL -- do not change without regenerating all commits)
 
-**Filename:** `{country_dir}/{official_id}.md` -> `spain/BOE-A-1978-31229.md`
+**File structure is FLAT -- one directory per country, no subdirectories:**
+```
+legalize-es/
+  es/BOE-A-1978-31229.md      ← state-level laws
+  es-pv/BOE-A-2020-615.md     ← autonomous communities (jurisdiction)
+legalize-at/
+  at/AT-10002333.md            ← all laws flat in at/
+```
+Never create subdirectories by rango, category, or any other grouping. The rango goes in the YAML frontmatter, not in the directory structure.
+
+**Filename:** `{pais}/{identificador}.md` (e.g., `es/BOE-A-1978-31229.md`, `at/AT-10002333.md`)
 
 **Frontmatter:**
 ```yaml
