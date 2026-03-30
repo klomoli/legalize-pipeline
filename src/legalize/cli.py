@@ -91,49 +91,24 @@ def fetch(
         legalize fetch -c se --all                  # All Swedish statutes
         legalize fetch -c de --limit 5              # Test: 5 German laws
     """
+    from legalize.pipeline import generic_fetch_all, generic_fetch_one
+
     config = ctx.obj["config"]
     if data_dir:
         config.data_dir = data_dir
     if legi_dir:
         config.legi_dir = legi_dir
 
-    if country == "es":
-        from legalize.pipeline import fetch_all, fetch_catalog, fetch_one
-
-        if catalog:
-            fetch_catalog(config, force=force)
-        elif fetch_all_flag:
-            fetch_all(config, force=force)
-        elif norm_ids:
-            for norm_id in norm_ids:
-                fetch_one(config, norm_id, force=force)
-        else:
-            console.print("Use --catalog, --all, or pass norm IDs.")
-
-    elif country == "fr":
-        from legalize.pipeline_fr import fetch_all_fr, fetch_one_fr
-
-        if fetch_all_flag:
-            fetch_all_fr(config, force=force)
-        elif norm_ids:
-            for norm_id in norm_ids:
-                fetch_one_fr(config, norm_id, force=force)
-        else:
-            console.print("Use --all or pass LEGITEXT IDs.")
-
-    elif country == "se":
-        from legalize.pipeline_se import fetch_all_se, fetch_one_se
-
-        if fetch_all_flag:
-            fetch_all_se(config, force=force)
-        elif norm_ids:
-            for sfs in norm_ids:
-                fetch_one_se(config, sfs, force=force)
-        else:
-            console.print("Use --all or pass SFS numbers.")
-
+    if catalog and country == "es":
+        from legalize.pipeline import fetch_catalog
+        fetch_catalog(config, force=force)
+    elif fetch_all_flag:
+        generic_fetch_all(config, country, force=force, limit=limit)
+    elif norm_ids:
+        for norm_id in norm_ids:
+            generic_fetch_one(config, country, norm_id, force=force)
     else:
-        console.print(f"[red]Country '{country}' fetch not implemented yet.[/red]")
+        console.print("Use --all, --catalog (ES only), or pass norm IDs.")
 
 
 # ─────────────────────────────────────────────
@@ -197,6 +172,8 @@ def bootstrap(
         legalize bootstrap -c fr --legi-dir /path   # France
         legalize bootstrap -c se --data-dir ../data-se  # Sweden
     """
+    from legalize.pipeline import generic_bootstrap
+
     config = ctx.obj["config"]
     if repo_path:
         config.git.repo_path = repo_path
@@ -205,37 +182,24 @@ def bootstrap(
     if legi_dir:
         config.legi_dir = legi_dir
 
-    if country == "es":
-        from legalize.pipeline import bootstrap as run_bootstrap, bootstrap_from_local_xml
+    # Special case: bootstrap from local XML (ES pilot/tests)
+    if xml_path and country == "es":
+        from legalize.pipeline import bootstrap_from_local_xml
 
-        if xml_path:
-            metadata = NormaMetadata(
-                titulo="Constitución Española",
-                titulo_corto="Constitución Española",
-                identificador="BOE-A-1978-31229",
-                pais="es",
-                rango=Rango.CONSTITUCION,
-                fecha_publicacion=date(1978, 12, 29),
-                estado=EstadoNorma.VIGENTE,
-                departamento="Cortes Generales",
-                fuente="https://www.boe.es/eli/es/c/1978/12/27/(1)",
-            )
-            bootstrap_from_local_xml(config, metadata, xml_path, dry_run=dry_run)
-        else:
-            run_bootstrap(config, dry_run=dry_run)
-
-    elif country == "fr":
-        from legalize.pipeline_fr import bootstrap_fr
-        config.country = "fr"
-        bootstrap_fr(config, dry_run=dry_run)
-
-    elif country == "se":
-        from legalize.pipeline_se import bootstrap_se
-        config.country = "se"
-        bootstrap_se(config, dry_run=dry_run)
-
+        metadata = NormaMetadata(
+            titulo="Constitución Española",
+            titulo_corto="Constitución Española",
+            identificador="BOE-A-1978-31229",
+            pais="es",
+            rango=Rango.CONSTITUCION,
+            fecha_publicacion=date(1978, 12, 29),
+            estado=EstadoNorma.VIGENTE,
+            departamento="Cortes Generales",
+            fuente="https://www.boe.es/eli/es/c/1978/12/27/(1)",
+        )
+        bootstrap_from_local_xml(config, metadata, xml_path, dry_run=dry_run)
     else:
-        console.print(f"[red]Country '{country}' bootstrap not implemented yet.[/red]")
+        generic_bootstrap(config, country, dry_run=dry_run)
 
 
 # ─────────────────────────────────────────────

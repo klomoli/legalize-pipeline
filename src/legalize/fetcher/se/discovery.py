@@ -16,7 +16,6 @@ import logging
 import re
 from collections.abc import Iterator
 from datetime import date
-from urllib.parse import quote
 
 from legalize.fetcher.base import LegislativeClient, NormDiscovery
 

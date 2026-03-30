@@ -264,6 +264,162 @@ def fetch_catalog_ccaa(config: Config, jurisdiccion: str, force: bool = False) -
 
 
 # ─────────────────────────────────────────────
+# GENERIC FETCH — works for any country via dispatch
+# ─────────────────────────────────────────────
+
+
+def generic_fetch_one(
+    config: Config,
+    country: str,
+    norm_id: str,
+    force: bool = False,
+) -> NormaCompleta | None:
+    """Fetch one norm for any country using countries.py dispatch.
+
+    Uses the country's client, text_parser, and metadata_parser.
+    Saves structured JSON to data_dir.
+    """
+    from legalize.countries import get_client_class, get_metadata_parser, get_text_parser
+
+    cc = config.get_country(country)
+    safe_id = norm_id.replace(":", "-").replace("/", "-")
+    json_path = Path(cc.data_dir) / "json" / f"{safe_id}.json"
+
+    if json_path.exists() and not force:
+        console.print(f"  [dim]{norm_id} already processed, skipping[/dim]")
+        return load_norma_from_json(json_path)
+
+    client_cls = get_client_class(country)
+    text_parser = get_text_parser(country)
+    meta_parser = get_metadata_parser(country)
+
+    with client_cls.create(cc) as client:
+        try:
+            console.print(f"  Processing [bold]{norm_id}[/bold]...")
+
+            meta_data = client.get_metadatos(norm_id)
+            metadata = meta_parser.parse(meta_data, norm_id)
+
+            text_data = client.get_texto(norm_id)
+            bloques = text_parser.parse_texto(text_data)
+            reforms = _extract_reforms_generic(text_parser, client, norm_id, bloques)
+
+            norma = NormaCompleta(
+                metadata=metadata,
+                bloques=tuple(bloques),
+                reforms=tuple(reforms),
+            )
+
+            save_structured_json(cc.data_dir, norma)
+
+            console.print(
+                f"  [green]✓[/green] {metadata.titulo_corto}: "
+                f"{len(bloques)} bloques, {len(reforms)} versiones"
+            )
+            return norma
+
+        except Exception:
+            logger.error("Error processing %s", norm_id, exc_info=True)
+            console.print(f"  [red]✗ Error processing {norm_id}[/red]")
+            return None
+
+
+def generic_fetch_all(
+    config: Config,
+    country: str,
+    force: bool = False,
+    limit: int | None = None,
+) -> list[str]:
+    """Fetch all norms for any country using discovery + dispatch.
+
+    Uses NormDiscovery.discover_all() then fetches each norm.
+    Supports --limit for testing (fetch only N norms).
+    """
+    from legalize.countries import get_client_class, get_discovery_class
+
+    cc = config.get_country(country)
+    client_cls = get_client_class(country)
+    discovery_cls = get_discovery_class(country)
+
+    # Discover all norm IDs
+    with client_cls.create(cc) as client:
+        discovery = discovery_cls()
+        norm_ids = list(discovery.discover_all(client))
+
+    if limit:
+        norm_ids = norm_ids[:limit]
+
+    console.print(f"[bold]Fetch — {len(norm_ids)} norms for {country.upper()}[/bold]\n")
+
+    fetched = []
+    errors = 0
+    for i, norm_id in enumerate(norm_ids, 1):
+        norma = generic_fetch_one(config, country, norm_id, force=force)
+        if norma is not None:
+            fetched.append(norm_id)
+        else:
+            errors += 1
+
+        if i % 50 == 0:
+            console.print(
+                f"  [dim][{i}/{len(norm_ids)}] {len(fetched)} OK, {errors} errors[/dim]"
+            )
+
+    console.print(f"\n[bold green]✓ {len(fetched)} norms fetched[/bold green]")
+    if errors:
+        console.print(f"[yellow]⚠ {errors} errors[/yellow]")
+
+    return fetched
+
+
+def generic_bootstrap(
+    config: Config,
+    country: str,
+    dry_run: bool = False,
+    limit: int | None = None,
+) -> int:
+    """Full bootstrap for any country: discover + fetch + commit."""
+    cc = config.get_country(country)
+
+    console.print(f"[bold]Bootstrap {country.upper()}[/bold]\n")
+    console.print(f"  Data dir: {cc.data_dir}")
+    console.print(f"  Repo output: {config.git.repo_path}\n")
+
+    fetched = generic_fetch_all(config, country, force=False, limit=limit)
+    if not fetched:
+        console.print("[yellow]No norms found.[/yellow]")
+        return 0
+
+    console.print("\n[bold]Commit — generating git history[/bold]\n")
+    total_commits = commit_all(config, dry_run=dry_run)
+
+    console.print(f"\n[bold green]✓ Bootstrap {country.upper()} completed[/bold green]")
+    console.print(f"  {len(fetched)} norms fetched, {total_commits} commits created")
+
+    return total_commits
+
+
+def _extract_reforms_generic(text_parser, client, norm_id, bloques):
+    """Extract reforms, with country-specific hooks.
+
+    Swedish parser has extract_reforms_from_sfsr for the SFSR amendment register.
+    Falls back to generic extract_reforms() from bloques.
+    """
+    if hasattr(text_parser, "extract_reforms_from_sfsr") and hasattr(
+        client, "get_amendment_register"
+    ):
+        try:
+            sfsr_html = client.get_amendment_register(norm_id)
+            return text_parser.extract_reforms_from_sfsr(sfsr_html)
+        except Exception:
+            logger.warning(
+                "Amendment register unavailable for %s, using text-based reforms",
+                norm_id,
+            )
+    return extract_reforms(bloques)
+
+
+# ─────────────────────────────────────────────
 # COMMIT — generate git commits from local data/
 # ─────────────────────────────────────────────
 

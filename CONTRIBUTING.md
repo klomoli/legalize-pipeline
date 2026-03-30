@@ -8,7 +8,7 @@ The highest-impact contribution is adding a new country's legislation to the pip
 
 **Full guide:** [docs/ADDING_A_COUNTRY.md](docs/ADDING_A_COUNTRY.md)
 
-**Reference implementation:** France (`fetcher/client_legi.py`, `fetcher/parser_legi.py`, `pipeline_fr.py`)
+**Reference implementation:** France (`fetcher/fr/`)
 
 **What you need to know:**
 - Your country's official open data source for legislation (API, XML dump, or scraping)
@@ -16,19 +16,23 @@ The highest-impact contribution is adding a new country's legislation to the pip
 - Basic understanding of your country's legal hierarchy (types of laws, how reforms work)
 
 **What you produce:**
-- A client to fetch raw data from the source
-- A parser to convert it into our generic data model (`Bloque`, `Version`, `NormaMetadata`)
-- A discovery module to find all laws in the catalog
+- A `fetcher/{code}/` folder with:
+  - `client.py` — fetch raw data from the source
+  - `parser.py` — convert it into our generic data model (`Bloque`, `Version`, `NormaMetadata`)
+  - `discovery.py` — find all laws in the catalog
 - Tests with fixture data
 
-The generic layers (markdown rendering, git committing, web app, API) work automatically once your parser produces the right data structures.
+The generic layers (markdown rendering, git committing, CLI) work automatically once your parser produces the right data structures.
 
-## Other contributions
+## Quick test
 
-- **Bug fixes** in the web app or pipeline
-- **Translations** — improve i18n strings in `src/legalize/web/countries.py`
-- **Design** — CSS, templates, responsive improvements
-- **Documentation** — improve guides, add examples
+```bash
+# Test your parser with just 5 laws
+legalize fetch -c {code} --all --limit 5
+
+# Dry-run: see what commits it would create
+legalize bootstrap -c {code} --dry-run
+```
 
 ## Development setup
 
@@ -40,17 +44,11 @@ cd legalize-pipeline
 # Install
 pip install -e ".[dev]"
 
-# Start PostgreSQL (for web development)
-docker compose up -d db
-
 # Run tests
 pytest tests/ -v
 
 # Lint
 ruff check src/ tests/
-
-# Start web server (needs DATABASE_URL)
-DATABASE_URL="postgresql://legalize:legalize@localhost:5432/legalize" legalize serve
 ```
 
 ## Code conventions
