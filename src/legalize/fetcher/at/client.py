@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 API_BASE = "https://data.bka.gv.at/ris/api/v2.6"
 DOC_BASE = "https://www.ris.bka.gv.at/Dokumente/Bundesnormen"
-RATE_LIMIT_DELAY = 0.5  # seconds between requests
+RATE_LIMIT_DELAY = 0.1  # seconds between requests (no documented rate limit)
 
 
 class RISClient(LegislativeClient):
@@ -78,18 +78,55 @@ class RISClient(LegislativeClient):
     def get_metadata(self, gesetzesnummer: str) -> bytes:
         """Fetch JSON metadata for all NOR entries of a Gesetzesnummer.
 
-        Returns raw JSON bytes of the full API response (OgdSearchResult).
-        gesetzesnummer is the stable law identifier, e.g. '10002333'.
+        Paginates to collect ALL NOR documents (some laws have 2000+).
+        Returns a combined JSON with all documents.
         """
-        params = {
-            "Applikation": "BrKons",
-            "Gesetzesnummer": gesetzesnummer,
-            "Seitennummer": 1,
-            "Dokumentnummer": 100,
+        all_docs = []
+        page = 1
+
+        while True:
+            params = {
+                "Applikation": "BrKons",
+                "Gesetzesnummer": gesetzesnummer,
+                "Seitennummer": page,
+                "DokumenteProSeite": "OneHundred",
+            }
+            r = self._session.get(f"{API_BASE}/Bundesrecht", params=params, timeout=30)
+            r.raise_for_status()
+
+            data = json.loads(r.content)
+            results = data.get("OgdSearchResult", {}).get("OgdDocumentResults", {})
+            docs = results.get("OgdDocumentReference", [])
+
+            if not docs:
+                break
+
+            all_docs.extend(docs)
+            hits_info = results.get("Hits", {})
+            total = int(hits_info.get("#text", "0"))
+            logger.info(
+                "Page %d: %d docs (total: %d/%d)",
+                page,
+                len(docs),
+                len(all_docs),
+                total,
+            )
+
+            if len(all_docs) >= total:
+                break
+            page += 1
+            time.sleep(RATE_LIMIT_DELAY)
+
+        # Reconstruct a single response with all docs
+        combined = {
+            "OgdSearchResult": {
+                "OgdDocumentResults": {
+                    "Hits": {"#text": str(len(all_docs))},
+                    "OgdDocumentReference": all_docs,
+                }
+            }
         }
-        r = self._session.get(f"{API_BASE}/Bundesrecht", params=params, timeout=30)
-        r.raise_for_status()
-        return r.content
+        return json.dumps(combined).encode("utf-8")
 
     def get_page(self, page: int = 1, page_size: int = 100, **filters: str) -> bytes:
         """Generic paginated search against the Bundesrecht endpoint."""
