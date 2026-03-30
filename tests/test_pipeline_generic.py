@@ -1,7 +1,7 @@
-"""Tests for the multi-country pipeline refactor.
+"""Tests for the generic multi-country pipeline.
 
 Covers: CountryConfig, countries dispatch, storage round-trip,
-IdToFilename reverse index, StateStore backward compat, and
+IdToFilename reverse index, StateStore persistence, and
 generic pipeline helpers.
 """
 
@@ -310,32 +310,32 @@ class TestMappingsReverseIndex:
 
 
 # ─────────────────────────────────────────────
-# TestStateStoreCompat
+# TestStateStorePersistence
 # ─────────────────────────────────────────────
 
 
-class TestStateStoreCompat:
-    def test_load_old_spanish_keys(self, tmp_path):
-        """Create a state.json with old Spanish keys, verify load() reads them."""
+class TestStateStorePersistence:
+    def test_load_state_from_json(self, tmp_path):
+        """Load a state.json and verify all fields are read correctly."""
         state_path = tmp_path / "state.json"
-        old_data = {
-            "ultimo_sumario_procesado": "2024-03-15",
-            "normas_procesadas": {
+        data = {
+            "last_summary": "2024-03-15",
+            "norms_processed": {
                 "BOE-A-1978-31229": {
-                    "ultima_version_aplicada": "2024-02-17",
-                    "total_versiones_aplicadas": 12,
+                    "last_version_applied": "2024-02-17",
+                    "total_versions_applied": 12,
                 }
             },
-            "ejecuciones": [
+            "runs": [
                 {
-                    "fecha": "2024-03-15T10:30:00",
-                    "sumarios_revisados": ["2024-03-15"],
-                    "commits_generados": 5,
-                    "errores": [],
+                    "timestamp": "2024-03-15T10:30:00",
+                    "summaries_reviewed": ["2024-03-15"],
+                    "commits_created": 5,
+                    "errors": [],
                 }
             ],
         }
-        state_path.write_text(json.dumps(old_data), encoding="utf-8")
+        state_path.write_text(json.dumps(data), encoding="utf-8")
 
         store = StateStore(state_path)
         store.load()
@@ -346,8 +346,8 @@ class TestStateStoreCompat:
         assert ns.last_version_applied == "2024-02-17"
         assert ns.total_versions_applied == 12
 
-    def test_save_uses_english_keys(self, tmp_path):
-        """Save state, read raw JSON, verify keys are English."""
+    def test_save_json_structure(self, tmp_path):
+        """Save state, read raw JSON, verify key structure."""
         state_path = tmp_path / "state.json"
         store = StateStore(state_path)
         store.last_summary_date = date(2024, 6, 1)
@@ -355,13 +355,11 @@ class TestStateStoreCompat:
         store.save()
 
         raw = json.loads(state_path.read_text(encoding="utf-8"))
-        assert "last_summary" in raw
-        assert "norms_processed" in raw
-        assert "runs" in raw
-        # Old Spanish keys must NOT be present
-        assert "ultimo_sumario_procesado" not in raw
-        assert "normas_procesadas" not in raw
-        assert "ejecuciones" not in raw
+        assert raw["last_summary"] == "2024-06-01"
+        assert "TEST-001" in raw["norms_processed"]
+        assert raw["norms_processed"]["TEST-001"]["last_version_applied"] == "2024-06-01"
+        assert raw["norms_processed"]["TEST-001"]["total_versions_applied"] == 3
+        assert isinstance(raw["runs"], list)
 
     def test_round_trip(self, tmp_path):
         """record_run + save + load, verify data preserved."""

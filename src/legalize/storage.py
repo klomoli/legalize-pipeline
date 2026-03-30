@@ -170,8 +170,8 @@ def _norma_to_dict(norm: NormaCompleta) -> dict:
 def load_norma_from_json(json_path: Path) -> NormaCompleta:
     """Load a NormaCompleta from a structured JSON file.
 
-    Inverse of save_structured_json(). Handles backward compatibility
-    with older JSONs that don't have css_classes.
+    Inverse of save_structured_json(). Falls back to "parrafo" css_class
+    when not present in JSON (most norms use only parrafo).
     """
     with open(json_path, encoding="utf-8") as f:
         data = json.load(f)

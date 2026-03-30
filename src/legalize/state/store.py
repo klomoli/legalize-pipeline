@@ -44,30 +44,27 @@ class StateStore:
         self._runs: list[RunRecord] = []
 
     def load(self) -> None:
-        """Load state from disk. Handles both old and new key names."""
+        """Load state from disk."""
         if not self._path.exists():
             return
 
         with open(self._path, encoding="utf-8") as f:
             data = json.load(f)
 
-        # Support both old (Spanish) and new (English) key names
-        self._last_summary = data.get("last_summary") or data.get("ultimo_sumario_procesado")
+        self._last_summary = data.get("last_summary")
 
-        norms_raw = data.get("norms_processed") or data.get("normas_procesadas", {})
-        for k, v in norms_raw.items():
+        for k, v in data.get("norms_processed", {}).items():
             self._norms[k] = NormState(
-                last_version_applied=v.get("last_version_applied") or v.get("ultima_version_aplicada", ""),
-                total_versions_applied=v.get("total_versions_applied") or v.get("total_versiones_aplicadas", 0),
+                last_version_applied=v["last_version_applied"],
+                total_versions_applied=v["total_versions_applied"],
             )
 
-        runs_raw = data.get("runs") or data.get("ejecuciones", [])
-        for r in runs_raw:
+        for r in data.get("runs", []):
             self._runs.append(RunRecord(
-                timestamp=r.get("timestamp") or r.get("fecha", ""),
-                summaries_reviewed=r.get("summaries_reviewed") or r.get("sumarios_revisados", []),
-                commits_created=r.get("commits_created") or r.get("commits_generados", 0),
-                errors=r.get("errors") or r.get("errores", []),
+                timestamp=r["timestamp"],
+                summaries_reviewed=r.get("summaries_reviewed", []),
+                commits_created=r.get("commits_created", 0),
+                errors=r.get("errors", []),
             ))
 
     def save(self) -> None:

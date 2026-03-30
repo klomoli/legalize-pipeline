@@ -183,7 +183,7 @@ class TestParseDateLegi:
         assert _parse_date_legi("1958-10-05") == date(1958, 10, 5)
 
     def test_fecha_yyyymmdd_compat(self):
-        """Backward compatibility with legacy format."""
+        """Also accepts YYYYMMDD format."""
         assert _parse_date_legi("20080724") == date(2008, 7, 24)
 
     def test_sentinel_2999_devuelve_none(self):
@@ -191,7 +191,7 @@ class TestParseDateLegi:
         assert _parse_date_legi("2999-01-01") is None
 
     def test_sentinel_99999999_devuelve_none(self):
-        """99999999 (legacy format) returns None."""
+        """99999999 sentinel returns None."""
         assert _parse_date_legi("99999999") is None
 
     def test_vacia_devuelve_none(self):

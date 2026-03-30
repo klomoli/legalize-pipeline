@@ -65,7 +65,7 @@ def _parse_date_legi(date_str: str) -> date | None:
     Actual format of the LEGI dump (verified with 2026-03-27 data):
     - Dates in YYYY-MM-DD format (ISO 8601), e.g.: "2008-07-24"
     - Sentinel: "2999-01-01" (= indefinite validity) → None
-    - Also accepts YYYYMMDD for compatibility with example XML
+    - Also accepts YYYYMMDD (some LEGI sources use this format)
     - Years > 2100 → None (covers sentinel 2999 and invalid future dates)
     """
     if not date_str:
