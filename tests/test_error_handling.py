@@ -82,14 +82,13 @@ def _make_simple_norm(norm_id: str, title: str) -> NormaCompleta:
 def test_config(tmp_path) -> Config:
     """Config with temporary repo and data dir."""
     return Config(
-        git=GitConfig(repo_path=str(tmp_path / "repo")),
-        data_dir=str(tmp_path / "data"),
-        state_path=str(tmp_path / "state.json"),
-        mappings_path=str(tmp_path / "mappings.json"),
+        git=GitConfig(),
         countries={
             "es": CountryConfig(
                 repo_path=str(tmp_path / "repo"),
                 data_dir=str(tmp_path / "data"),
+                state_path=str(tmp_path / "state.json"),
+                mappings_path=str(tmp_path / "mappings.json"),
             ),
         },
     )
@@ -195,7 +194,7 @@ class TestCommitErrorHandling:
         """Call commit_one with a norm_id that has no JSON file.
         Verify returns 0 (not crash).
         """
-        result = commit_one(test_config, "NONEXISTENT-NORM-ID")
+        result = commit_one(test_config, "es", "NONEXISTENT-NORM-ID")
         assert result == 0
 
     def test_commit_all_continues_after_failure(self, test_config):
@@ -205,15 +204,15 @@ class TestCommitErrorHandling:
         # Save 2 valid norms
         norm1 = _make_simple_norm("TEST-ERR-001", "Ley Uno")
         norm3 = _make_simple_norm("TEST-ERR-003", "Ley Tres")
-        save_structured_json(test_config.data_dir, norm1)
-        save_structured_json(test_config.data_dir, norm3)
+        save_structured_json(test_config.get_country("es").data_dir, norm1)
+        save_structured_json(test_config.get_country("es").data_dir, norm3)
 
         # Write a corrupt JSON file
-        json_dir = Path(test_config.data_dir) / "json"
+        json_dir = Path(test_config.get_country("es").data_dir) / "json"
         corrupt_file = json_dir / "TEST-ERR-002.json"
         corrupt_file.write_text("{invalid json content", encoding="utf-8")
 
-        total = commit_all(test_config)
+        total = commit_all(test_config, "es")
 
         # The 2 valid norms should each produce 1 commit (bootstrap)
         assert total == 2
@@ -223,21 +222,21 @@ class TestCommitErrorHandling:
         Verify returns 0.
         """
         # Create the directory but leave it empty
-        json_dir = Path(test_config.data_dir) / "json"
+        json_dir = Path(test_config.get_country("es").data_dir) / "json"
         json_dir.mkdir(parents=True, exist_ok=True)
 
         # Also create the repo dir so git log doesn't crash
-        repo_dir = Path(test_config.git.repo_path)
+        repo_dir = Path(test_config.get_country("es").repo_path)
         repo_dir.mkdir(parents=True, exist_ok=True)
 
-        result = commit_all(test_config)
+        result = commit_all(test_config, "es")
         assert result == 0
 
     def test_commit_all_returns_zero_for_nonexistent_dir(self, test_config):
         """Call commit_all when data/json/ does not exist at all.
         Verify returns 0.
         """
-        result = commit_all(test_config)
+        result = commit_all(test_config, "es")
         assert result == 0
 
 

@@ -19,6 +19,7 @@ import requests
 
 from legalize.config import Config
 from legalize.fetcher.es.client import BOEClient
+from legalize.fetcher.es.config import ScopeConfig
 from legalize.fetcher.es.sumario import parse_summary
 
 logger = logging.getLogger(__name__)
@@ -30,7 +31,8 @@ def iter_fixed_norms(config: Config) -> Iterator[str]:
     Fixed norms are those always included in bootstrap,
     regardless of the scope dates.
     """
-    for boe_id in config.scope.normas_fijas:
+    cc = config.get_country("es")
+    for boe_id in cc.source.get("normas_fijas", []):
         yield boe_id
 
 
@@ -56,6 +58,11 @@ def iter_norms_from_summaries(
     Yields:
         BOE IDs of dispositions within scope.
     """
+    cc = config.get_country("es")
+    scope = ScopeConfig(
+        rangos=cc.source.get("rangos", []),
+        normas_fijas=cc.source.get("normas_fijas", []),
+    )
     seen: set[str] = set()
     current = start_date
 
@@ -67,7 +74,7 @@ def iter_norms_from_summaries(
 
         try:
             xml_data = client.get_sumario(current)
-            dispositions = parse_summary(xml_data, config.scope)
+            dispositions = parse_summary(xml_data, scope)
 
             for disp in dispositions:
                 if disp.id_boe not in seen:

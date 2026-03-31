@@ -111,9 +111,11 @@ def fetch(
 
     config = ctx.obj["config"]
     if data_dir:
-        config.data_dir = data_dir
+        cc = config.get_country(country)
+        cc.data_dir = data_dir
     if legi_dir:
-        config.legi_dir = legi_dir
+        cc = config.get_country(country)
+        cc.source["legi_dir"] = legi_dir
 
     if catalog and country == "es":
         from legalize.fetcher.es.fetch import fetch_catalog
@@ -152,10 +154,10 @@ def commit(
     config = ctx.obj["config"]
 
     if commit_all_flag:
-        commit_all(config, dry_run=dry_run)
+        commit_all(config, country, dry_run=dry_run)
     elif norm_ids:
         for norm_id in norm_ids:
-            commit_one(config, norm_id, dry_run=dry_run)
+            commit_one(config, country, norm_id, dry_run=dry_run)
     else:
         console.print("Use --all or pass norm IDs.")
 
@@ -193,11 +195,14 @@ def bootstrap(
 
     config = ctx.obj["config"]
     if repo_path:
-        config.git.repo_path = repo_path
+        cc = config.get_country(country)
+        cc.repo_path = repo_path
     if data_dir:
-        config.data_dir = data_dir
+        cc = config.get_country(country)
+        cc.data_dir = data_dir
     if legi_dir:
-        config.legi_dir = legi_dir
+        cc = config.get_country(country)
+        cc.source["legi_dir"] = legi_dir
 
     # Special case: bootstrap from local XML (ES pilot/tests)
     if xml_path and country == "es":
@@ -382,7 +387,8 @@ def bootstrap_ccaa(
 
         fetch_catalog_ccaa(config, jur, force=force)
 
-        json_dir = Path(config.data_dir) / "json"
+        cc = config.get_country("es")
+        json_dir = Path(cc.data_dir) / "json"
         dept_name = _JUR_TO_DEPT_NAME.get(jur, "")
         jur_files = []
         for jf in sorted(json_dir.glob("*.json")):
@@ -400,7 +406,7 @@ def bootstrap_ccaa(
         errors = 0
         for i, jf in enumerate(jur_files, 1):
             try:
-                c = commit_one(config, jf.stem, dry_run=dry_run)
+                c = commit_one(config, "es", jf.stem, dry_run=dry_run)
                 commits += c
             except (OSError, ValueError):
                 errors += 1
@@ -408,7 +414,7 @@ def bootstrap_ccaa(
                 console.print(f"  [{i}/{len(jur_files)}] {commits} commits")
 
         grand_total += commits
-        repo_dir = Path(config.git.repo_path) / jur
+        repo_dir = Path(cc.repo_path) / jur
         actual = len(list(repo_dir.glob("*.md"))) if repo_dir.exists() else 0
         console.print(f"  [green]=> {actual} files, {commits} new commits, {errors} errors[/green]")
 
@@ -431,26 +437,28 @@ def status(ctx: click.Context) -> None:
 
     config = ctx.obj["config"]
 
-    state = StateStore(config.state_path)
-    state.load()
-
-    mappings = IdToFilename(config.mappings_path)
-    mappings.load()
-
-    json_dir = Path(config.data_dir) / "json"
-    fetched = len(list(json_dir.glob("*.json"))) if json_dir.exists() else 0
-
     console.print("[bold]Legalize pipeline status[/bold]\n")
-    console.print(f"  Downloaded norms (data/): {fetched}")
-    console.print(f"  Committed norms: {state.norms_count}")
-    console.print(f"  Registered mappings: {len(mappings)}")
-    console.print(f"  Last processed summary: {state.last_summary_date or '[dim]none[/dim]'}")
 
-    # Show per-country stats if configured
+    if not config.countries:
+        console.print("  [dim]No countries configured.[/dim]")
+        return
+
+    # Show per-country stats
     if config.countries:
-        console.print("\n[bold]Per-country:[/bold]")
-        for code, cc in config.countries.items():
-            if cc.data_dir:
-                jdir = Path(cc.data_dir) / "json"
-                count = len(list(jdir.glob("*.json"))) if jdir.exists() else 0
-                console.print(f"  {code}: {count} norms in {cc.data_dir}")
+        console.print("[bold]Per-country:[/bold]")
+        for code in config.countries:
+            cc = config.get_country(code)
+            jdir = Path(cc.data_dir) / "json" if cc.data_dir else None
+            count = len(list(jdir.glob("*.json"))) if jdir and jdir.exists() else 0
+
+            state = StateStore(cc.state_path)
+            state.load()
+
+            mappings = IdToFilename(cc.mappings_path)
+            mappings.load()
+
+            console.print(f"\n  [bold]{code.upper()}[/bold]")
+            console.print(f"    Downloaded norms: {count}")
+            console.print(f"    Committed norms: {state.norms_count}")
+            console.print(f"    Registered mappings: {len(mappings)}")
+            console.print(f"    Last summary: {state.last_summary_date or '[dim]none[/dim]'}")

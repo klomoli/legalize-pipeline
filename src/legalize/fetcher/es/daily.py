@@ -37,13 +37,26 @@ def daily(
 
     from legalize.fetcher.cache import FileCache
     from legalize.fetcher.es.client import BOEClient
+    from legalize.fetcher.es.config import BOEConfig, ScopeConfig
     from legalize.fetcher.es.metadata import parse_metadata
     from legalize.fetcher.es.sumario import parse_summary
 
-    cache = FileCache(config.cache_dir)
-    state = StateStore(config.state_path)
+    cc = config.get_country("es")
+    source = cc.source
+    boe_config = BOEConfig(
+        base_url=source.get("base_url", BOEConfig.base_url),
+        requests_per_second=source.get("requests_per_second", BOEConfig.requests_per_second),
+        request_timeout=source.get("request_timeout", BOEConfig.request_timeout),
+        max_retries=source.get("max_retries", BOEConfig.max_retries),
+    )
+    scope = ScopeConfig(
+        rangos=source.get("rangos", []),
+        normas_fijas=source.get("normas_fijas", []),
+    )
+    cache = FileCache(cc.cache_dir)
+    state = StateStore(cc.state_path)
     state.load()
-    mappings = IdToFilename(config.mappings_path)
+    mappings = IdToFilename(cc.mappings_path)
     mappings.load()
 
     if target_date:
@@ -68,17 +81,17 @@ def daily(
 
     console.print(f"[bold]Daily — processing {len(dates_to_process)} day(s)[/bold]")
 
-    repo = GitRepo(config.git.repo_path, config.git.committer_name, config.git.committer_email)
+    repo = GitRepo(cc.repo_path, config.git.committer_name, config.git.committer_email)
     commits_created = 0
     errors: list[str] = []
 
-    with BOEClient(config.boe, cache) as client:
+    with BOEClient(boe_config, cache) as client:
         for current_date in dates_to_process:
             console.print(f"\n  [bold]{current_date}[/bold]")
 
             try:
                 xml_data = client.get_sumario(current_date)
-                dispositions = parse_summary(xml_data, config.scope)
+                dispositions = parse_summary(xml_data, scope)
             except requests.RequestException:
                 msg = f"Error fetching summary for {current_date}"
                 logger.error(msg, exc_info=True)

@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from legalize.config import Config, GitConfig
+from legalize.config import Config, CountryConfig, GitConfig
 from legalize.models import (
     Bloque,
     EstadoNorma,
@@ -213,20 +213,32 @@ def _make_norm_se() -> NormaCompleta:
 # ─────────────────────────────────────────────
 
 
+def _country_config(tmp_path, code: str) -> CountryConfig:
+    return CountryConfig(
+        repo_path=str(tmp_path / "repo"),
+        data_dir=str(tmp_path / "data"),
+        state_path=str(tmp_path / f"state-{code}.json"),
+        mappings_path=str(tmp_path / f"mappings-{code}.json"),
+    )
+
+
 @pytest.fixture
 def test_config(tmp_path) -> Config:
     """Config with temporary repo and data dir."""
     return Config(
-        git=GitConfig(repo_path=str(tmp_path / "repo")),
-        data_dir=str(tmp_path / "data"),
-        state_path=str(tmp_path / "state.json"),
-        mappings_path=str(tmp_path / "mappings.json"),
+        git=GitConfig(),
+        countries={
+            "es": _country_config(tmp_path, "es"),
+            "fr": _country_config(tmp_path, "fr"),
+            "se": _country_config(tmp_path, "se"),
+        },
     )
 
 
 def _save_norm(config: Config, norm: NormaCompleta) -> Path:
     """Save a norm to JSON and return the path."""
-    return save_structured_json(config.data_dir, norm)
+    cc = config.get_country(norm.metadata.pais)
+    return save_structured_json(cc.data_dir, norm)
 
 
 def _git_log_dates(repo_path: str) -> list[str]:
@@ -285,7 +297,7 @@ class TestGenericCommitMultiCountry:
     def test_correct_number_of_commits(self, test_config, make_norm, expected_dir):
         norm = make_norm()
         _save_norm(test_config, norm)
-        count = commit_one(test_config, norm.metadata.identificador)
+        count = commit_one(test_config, norm.metadata.pais, norm.metadata.identificador)
         assert count == 2
 
     @pytest.mark.parametrize(
@@ -300,10 +312,12 @@ class TestGenericCommitMultiCountry:
     def test_markdown_file_at_correct_path(self, test_config, make_norm, expected_dir):
         norm = make_norm()
         _save_norm(test_config, norm)
-        commit_one(test_config, norm.metadata.identificador)
+        commit_one(test_config, norm.metadata.pais, norm.metadata.identificador)
 
         md_path = (
-            Path(test_config.git.repo_path) / expected_dir / f"{norm.metadata.identificador}.md"
+            Path(test_config.get_country("es").repo_path)
+            / expected_dir
+            / f"{norm.metadata.identificador}.md"
         )
         assert md_path.exists(), f"Expected {md_path} to exist"
 
@@ -322,10 +336,12 @@ class TestGenericCommitMultiCountry:
     def test_frontmatter_has_correct_pais(self, test_config, make_norm, expected_dir):
         norm = make_norm()
         _save_norm(test_config, norm)
-        commit_one(test_config, norm.metadata.identificador)
+        commit_one(test_config, norm.metadata.pais, norm.metadata.identificador)
 
         md_path = (
-            Path(test_config.git.repo_path) / expected_dir / f"{norm.metadata.identificador}.md"
+            Path(test_config.get_country("es").repo_path)
+            / expected_dir
+            / f"{norm.metadata.identificador}.md"
         )
         content = md_path.read_text(encoding="utf-8")
         assert f'pais: "{norm.metadata.pais}"' in content
@@ -342,9 +358,9 @@ class TestGenericCommitMultiCountry:
     def test_git_commits_have_correct_trailers(self, test_config, make_norm, expected_dir):
         norm = make_norm()
         _save_norm(test_config, norm)
-        commit_one(test_config, norm.metadata.identificador)
+        commit_one(test_config, norm.metadata.pais, norm.metadata.identificador)
 
-        bodies = _git_log_bodies(test_config.git.repo_path)
+        bodies = _git_log_bodies(test_config.get_country("es").repo_path)
         assert len(bodies) == 2
 
         # Last commit should have Source-Id, Source-Date, Norm-Id
@@ -418,26 +434,26 @@ class TestMultiVersionNorm:
     def test_creates_four_commits(self, test_config):
         norm = self._make_four_version_norm()
         _save_norm(test_config, norm)
-        count = commit_one(test_config, norm.metadata.identificador)
+        count = commit_one(test_config, norm.metadata.pais, norm.metadata.identificador)
         assert count == 4
 
     def test_each_commit_has_correct_historical_date(self, test_config):
         norm = self._make_four_version_norm()
         _save_norm(test_config, norm)
-        commit_one(test_config, norm.metadata.identificador)
+        commit_one(test_config, norm.metadata.pais, norm.metadata.identificador)
 
-        dates = _git_log_dates(test_config.git.repo_path)
+        dates = _git_log_dates(test_config.get_country("es").repo_path)
         assert dates == ["1978-12-29", "1992-08-28", "2011-09-27", "2024-02-17"]
 
     def test_markdown_content_changes_between_versions(self, test_config):
         norm = self._make_four_version_norm()
         _save_norm(test_config, norm)
-        commit_one(test_config, norm.metadata.identificador)
+        commit_one(test_config, norm.metadata.pais, norm.metadata.identificador)
 
         # Get content at each commit
         result = subprocess.run(
             ["git", "log", "--format=%H", "--reverse"],
-            cwd=test_config.git.repo_path,
+            cwd=test_config.get_country("es").repo_path,
             capture_output=True,
             text=True,
         )
@@ -448,7 +464,7 @@ class TestMultiVersionNorm:
         for sha in shas:
             show = subprocess.run(
                 ["git", "show", f"{sha}:es/TEST-FOUR-VERSIONS.md"],
-                cwd=test_config.git.repo_path,
+                cwd=test_config.get_country("es").repo_path,
                 capture_output=True,
                 text=True,
             )
@@ -469,8 +485,8 @@ class TestMultiVersionNorm:
     def test_idempotent_rerun_creates_zero_commits(self, test_config):
         norm = self._make_four_version_norm()
         _save_norm(test_config, norm)
-        count1 = commit_one(test_config, norm.metadata.identificador)
-        count2 = commit_one(test_config, norm.metadata.identificador)
+        count1 = commit_one(test_config, norm.metadata.pais, norm.metadata.identificador)
+        count2 = commit_one(test_config, norm.metadata.pais, norm.metadata.identificador)
         assert count1 == 4
         assert count2 == 0
 
@@ -572,14 +588,22 @@ class TestStorageGenericRoundTrip:
 
 
 class TestCommitAllMultiCountry:
-    """Test commit_all with a mix of countries in the same data_dir."""
+    """Test commit_all with a mix of countries, each in their own data_dir."""
+
+    @staticmethod
+    def _commit_all_countries(test_config):
+        """Run commit_all for each configured country, return total."""
+        total = 0
+        for code in test_config.countries:
+            total += commit_all(test_config, code)
+        return total
 
     def test_all_three_norms_generate_commits(self, test_config):
         norms = [_make_norm_es(), _make_norm_fr(), _make_norm_se()]
         for norm in norms:
             _save_norm(test_config, norm)
 
-        total = commit_all(test_config)
+        total = self._commit_all_countries(test_config)
         # Each norm has 2 reforms = 2 commits, so 6 total
         assert total == 6
 
@@ -588,9 +612,9 @@ class TestCommitAllMultiCountry:
         for norm in norms:
             _save_norm(test_config, norm)
 
-        commit_all(test_config)
+        self._commit_all_countries(test_config)
 
-        repo = Path(test_config.git.repo_path)
+        repo = Path(test_config.get_country("es").repo_path)
         assert (repo / "es" / "BOE-A-2000-100.md").exists()
         assert (repo / "fr" / "LEGITEXT000006070721.md").exists()
         assert (repo / "se" / "SFS-1962-700.md").exists()
@@ -600,9 +624,9 @@ class TestCommitAllMultiCountry:
         for norm in norms:
             _save_norm(test_config, norm)
 
-        commit_all(test_config)
+        self._commit_all_countries(test_config)
 
-        repo = Path(test_config.git.repo_path)
+        repo = Path(test_config.get_country("es").repo_path)
 
         es_content = (repo / "es" / "BOE-A-2000-100.md").read_text(encoding="utf-8")
         assert 'pais: "es"' in es_content
@@ -621,9 +645,9 @@ class TestCommitAllMultiCountry:
         for norm in norms:
             _save_norm(test_config, norm)
 
-        commit_all(test_config)
+        self._commit_all_countries(test_config)
 
-        count = _git_commit_count(test_config.git.repo_path)
+        count = _git_commit_count(test_config.get_country("es").repo_path)
         assert count == 6
 
     def test_idempotent_rerun(self, test_config):
@@ -631,8 +655,8 @@ class TestCommitAllMultiCountry:
         for norm in norms:
             _save_norm(test_config, norm)
 
-        total1 = commit_all(test_config)
-        total2 = commit_all(test_config)
+        total1 = self._commit_all_countries(test_config)
+        total2 = self._commit_all_countries(test_config)
         assert total1 == 6
         assert total2 == 0
 
@@ -739,19 +763,19 @@ class TestBootstrapIncludesAllBlocks:
         """First commit (bootstrap) must include all 3 blocks, not just a1."""
         norm = self._make_norm_with_mismatched_dates()
         _save_norm(test_config, norm)
-        commit_one(test_config, norm.metadata.identificador)
+        commit_one(test_config, norm.metadata.pais, norm.metadata.identificador)
 
         # Read the FIRST commit's content (bootstrap), not the final state
         result = subprocess.run(
             ["git", "log", "--format=%H", "--reverse"],
-            cwd=test_config.git.repo_path,
+            cwd=test_config.get_country("es").repo_path,
             capture_output=True,
             text=True,
         )
         first_sha = result.stdout.strip().splitlines()[0]
         show = subprocess.run(
             ["git", "show", f"{first_sha}:es/TEST-INCLUDE-ALL.md"],
-            cwd=test_config.git.repo_path,
+            cwd=test_config.get_country("es").repo_path,
             capture_output=True,
             text=True,
         )
@@ -769,11 +793,11 @@ class TestBootstrapIncludesAllBlocks:
         """Second commit (reform) should change only article 3."""
         norm = self._make_norm_with_mismatched_dates()
         _save_norm(test_config, norm)
-        commits = commit_one(test_config, norm.metadata.identificador)
+        commits = commit_one(test_config, norm.metadata.pais, norm.metadata.identificador)
         assert commits == 2
 
         # Get the markdown at the last commit
-        md_path = Path(test_config.git.repo_path) / "es" / "TEST-INCLUDE-ALL.md"
+        md_path = Path(test_config.get_country("es").repo_path) / "es" / "TEST-INCLUDE-ALL.md"
         content = md_path.read_text(encoding="utf-8")
 
         # Article 3 should now have the reformed text

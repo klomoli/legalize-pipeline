@@ -157,7 +157,7 @@ def generic_bootstrap(
 
     console.print(f"[bold]Bootstrap {country.upper()}[/bold]\n")
     console.print(f"  Data dir: {cc.data_dir}")
-    console.print(f"  Repo output: {config.git.repo_path}\n")
+    console.print(f"  Repo output: {cc.repo_path}\n")
 
     fetched = generic_fetch_all(config, country, force=False, limit=limit)
     if not fetched:
@@ -165,7 +165,7 @@ def generic_bootstrap(
         return 0
 
     console.print("\n[bold]Commit — generating git history[/bold]\n")
-    total_commits = commit_all(config, dry_run=dry_run)
+    total_commits = commit_all(config, country, dry_run=dry_run)
 
     console.print(f"\n[bold green]✓ Bootstrap {country.upper()} completed[/bold green]")
     console.print(f"  {len(fetched)} norms fetched, {total_commits} commits created")
@@ -198,7 +198,7 @@ def _extract_reforms_generic(text_parser, client, norm_id, blocks):
 # ─────────────────────────────────────────────
 
 
-def commit_one(config: Config, norm_id: str, dry_run: bool = False) -> int:
+def commit_one(config: Config, country: str, norm_id: str, dry_run: bool = False) -> int:
     """Generate commits for ONE law from its JSON in data/.
 
     Does not download anything. Reads data/json/{norm_id}.json.
@@ -206,7 +206,8 @@ def commit_one(config: Config, norm_id: str, dry_run: bool = False) -> int:
 
     Returns number of commits created.
     """
-    json_path = Path(config.data_dir) / "json" / f"{norm_id}.json"
+    cc = config.get_country(country)
+    json_path = Path(cc.data_dir) / "json" / f"{norm_id}.json"
     if not json_path.exists():
         console.print(f"  [red]{json_path} does not exist. Run fetch first.[/red]")
         return 0
@@ -228,10 +229,10 @@ def commit_one(config: Config, norm_id: str, dry_run: bool = False) -> int:
             console.print(f"    [dim]{reform.fecha} [{label}][/dim]")
         return 0
 
-    repo = GitRepo(config.git.repo_path, config.git.committer_name, config.git.committer_email)
+    repo = GitRepo(cc.repo_path, config.git.committer_name, config.git.committer_email)
     repo.init()
 
-    mappings = IdToFilename(config.mappings_path)
+    mappings = IdToFilename(cc.mappings_path)
     mappings.load()
 
     commits_created = 0
@@ -264,12 +265,13 @@ def commit_one(config: Config, norm_id: str, dry_run: bool = False) -> int:
     return commits_created
 
 
-def commit_all(config: Config, dry_run: bool = False) -> int:
+def commit_all(config: Config, country: str, dry_run: bool = False) -> int:
     """Generate commits for ALL laws in data/json/.
 
     Processes each law independently — does not interleave commits.
     """
-    json_dir = Path(config.data_dir) / "json"
+    cc = config.get_country(country)
+    json_dir = Path(cc.data_dir) / "json"
     if not json_dir.exists():
         console.print("[red]No data in data/json/. Run fetch first.[/red]")
         return 0
@@ -277,7 +279,7 @@ def commit_all(config: Config, dry_run: bool = False) -> int:
     json_files = sorted(json_dir.glob("*.json"))
     console.print(f"[bold]Commit — generating commits for {len(json_files)} laws[/bold]\n")
 
-    state = StateStore(config.state_path)
+    state = StateStore(cc.state_path)
     state.load()
 
     total = 0
@@ -285,7 +287,7 @@ def commit_all(config: Config, dry_run: bool = False) -> int:
     for i, json_file in enumerate(json_files, 1):
         norm_id = json_file.stem
         try:
-            commits = commit_one(config, norm_id, dry_run=dry_run)
+            commits = commit_one(config, country, norm_id, dry_run=dry_run)
             total += commits
 
             if not dry_run and commits > 0:
@@ -313,7 +315,7 @@ def commit_all(config: Config, dry_run: bool = False) -> int:
 
     console.print(f"\n[bold green]✓ {total} commits created[/bold green]")
 
-    repo = GitRepo(config.git.repo_path, config.git.committer_name, config.git.committer_email)
+    repo = GitRepo(cc.repo_path, config.git.committer_name, config.git.committer_email)
     log_output = repo.log()
     if log_output and not dry_run:
         lines = log_output.strip().splitlines()
@@ -343,7 +345,7 @@ def reprocess(
     commits = 0
     for norm_id in norm_ids:
         generic_fetch_one(config, country, norm_id, force=True)
-        commits += commit_one(config, norm_id, dry_run=dry_run)
+        commits += commit_one(config, country, norm_id, dry_run=dry_run)
     return commits
 
 
@@ -356,9 +358,11 @@ def bootstrap_from_local_xml(
     config: Config,
     metadata: NormaMetadata,
     xml_path: str | Path,
+    country: str = "es",
     dry_run: bool = False,
 ) -> int:
     """Bootstrap from a local XML (pilot/tests)."""
+    cc = config.get_country(country)
     xml_bytes = Path(xml_path).read_bytes()
     blocks = parse_text_xml(xml_bytes)
     reforms = extract_reforms(blocks)
@@ -369,7 +373,7 @@ def bootstrap_from_local_xml(
         reforms=tuple(reforms),
     )
 
-    save_raw_xml(config.data_dir, metadata.identificador, xml_bytes)
-    save_structured_json(config.data_dir, norm)
+    save_raw_xml(cc.data_dir, metadata.identificador, xml_bytes)
+    save_structured_json(cc.data_dir, norm)
 
-    return commit_one(config, metadata.identificador, dry_run=dry_run)
+    return commit_one(config, country, metadata.identificador, dry_run=dry_run)

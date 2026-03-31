@@ -6,23 +6,16 @@ Loaded from config.yaml with optional CLI argument overrides.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
-
-# Spain-specific config types — canonical location is fetcher/es/config.py.
-# Re-exported here for backward compatibility (Spain pipeline code reads
-# config.boe / config.scope which are typed as BOEConfig / ScopeConfig).
-from legalize.fetcher.es.config import BOEConfig, ScopeConfig  # noqa: F401
 
 
 @dataclass
 class GitConfig:
-    """Git configuration for the output repo."""
+    """Git configuration (committer identity, branch, push)."""
 
-    repo_path: str = "../es"
     committer_name: str = "leyes-bot"
     committer_email: str = "bot@legalize.dev"
     branch: str = "main"
@@ -46,14 +39,7 @@ class CountryConfig:
 class Config:
     """Global pipeline configuration."""
 
-    boe: BOEConfig = field(default_factory=BOEConfig)
-    scope: ScopeConfig = field(default_factory=ScopeConfig)
     git: GitConfig = field(default_factory=GitConfig)
-    cache_dir: str = ".cache"
-    data_dir: str = "../data"  # Raw XML + structured JSON (outside the repo)
-    state_path: str = ".pipeline/state.json"
-    mappings_path: str = ".pipeline/mappings/id-to-filename.json"
-    legi_dir: str = ""  # Path to the extracted LEGI dump (France)
     countries: dict[str, CountryConfig] = field(default_factory=dict)
 
     def get_country(self, code: str) -> CountryConfig:
@@ -69,12 +55,6 @@ class Config:
         if not cc.mappings_path:
             cc.mappings_path = f".pipeline/{code}/mappings.json"
         return cc
-
-
-def _parse_date(value: str | None) -> Optional[date]:
-    if value is None:
-        return None
-    return date.fromisoformat(value)
 
 
 def load_config(path: str | Path = "config.yaml", overrides: dict | None = None) -> Config:
@@ -108,51 +88,13 @@ def load_config(path: str | Path = "config.yaml", overrides: dict | None = None)
             source=country_raw.get("source", {}),
         )
 
-    # Spain-specific sections — only parsed if present in YAML
-    boe_raw = raw.get("boe")
-    boe = (
-        BOEConfig(
-            base_url=boe_raw.get("base_url", BOEConfig.base_url),
-            request_timeout=boe_raw.get("request_timeout", BOEConfig.request_timeout),
-            max_retries=boe_raw.get("max_retries", BOEConfig.max_retries),
-            retry_backoff_base=boe_raw.get("retry_backoff_base", BOEConfig.retry_backoff_base),
-            retry_backoff_multiplier=boe_raw.get(
-                "retry_backoff_multiplier", BOEConfig.retry_backoff_multiplier
-            ),
-            retry_jitter=boe_raw.get("retry_jitter", BOEConfig.retry_jitter),
-            requests_per_second=boe_raw.get("requests_per_second", BOEConfig.requests_per_second),
-            user_agent=boe_raw.get("user_agent", BOEConfig.user_agent),
-        )
-        if boe_raw
-        else BOEConfig()
-    )
-
-    scope_raw = raw.get("scope")
-    scope = (
-        ScopeConfig(
-            rangos=list(scope_raw.get("rangos", [])),
-            fecha_desde=_parse_date(scope_raw.get("fecha_desde")),
-            fecha_hasta=_parse_date(scope_raw.get("fecha_hasta")),
-            normas_fijas=scope_raw.get("normas_fijas", []),
-        )
-        if scope_raw
-        else ScopeConfig()
-    )
-
     return Config(
-        boe=boe,
-        scope=scope,
         git=GitConfig(
-            repo_path=git_raw.get("repo_path", GitConfig.repo_path),
             committer_name=git_raw.get("committer_name", GitConfig.committer_name),
             committer_email=git_raw.get("committer_email", GitConfig.committer_email),
             branch=git_raw.get("branch", GitConfig.branch),
             push=git_raw.get("push", GitConfig.push),
         ),
-        cache_dir=raw.get("cache_dir", Config.cache_dir),
-        state_path=raw.get("state_path", Config.state_path),
-        mappings_path=raw.get("mappings_path", Config.mappings_path),
-        legi_dir=raw.get("legi_dir", Config.legi_dir),
         countries=countries,
     )
 

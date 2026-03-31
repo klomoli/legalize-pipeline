@@ -29,15 +29,24 @@ def fetch_one(config: Config, boe_id: str, force: bool = False) -> NormaCompleta
     """
     from legalize.fetcher.cache import FileCache
     from legalize.fetcher.es.client import BOEClient
+    from legalize.fetcher.es.config import BOEConfig
     from legalize.fetcher.es.metadata import parse_metadata
 
-    json_path = Path(config.data_dir) / "json" / f"{boe_id}.json"
+    cc = config.get_country("es")
+    json_path = Path(cc.data_dir) / "json" / f"{boe_id}.json"
     if json_path.exists() and not force:
         console.print(f"  [dim]{boe_id} already downloaded, skipping[/dim]")
         return load_norma_from_json(json_path)
 
-    cache = FileCache(config.cache_dir)
-    with BOEClient(config.boe, cache) as client:
+    source = cc.source
+    boe_config = BOEConfig(
+        base_url=source.get("base_url", BOEConfig.base_url),
+        requests_per_second=source.get("requests_per_second", BOEConfig.requests_per_second),
+        request_timeout=source.get("request_timeout", BOEConfig.request_timeout),
+        max_retries=source.get("max_retries", BOEConfig.max_retries),
+    )
+    cache = FileCache(cc.cache_dir)
+    with BOEClient(boe_config, cache) as client:
         try:
             console.print(f"  Downloading [bold]{boe_id}[/bold]...")
             meta_xml = client.get_metadata(boe_id)
@@ -53,8 +62,8 @@ def fetch_one(config: Config, boe_id: str, force: bool = False) -> NormaCompleta
                 reforms=tuple(reforms),
             )
 
-            save_raw_xml(config.data_dir, boe_id, text_xml)
-            save_structured_json(config.data_dir, norm)
+            save_raw_xml(cc.data_dir, boe_id, text_xml)
+            save_structured_json(cc.data_dir, norm)
 
             console.print(
                 f"  [green]✓[/green] {metadata.titulo_corto}: "
@@ -73,9 +82,11 @@ def fetch_all(config: Config, force: bool = False) -> list[str]:
 
     Returns list of successfully downloaded BOE-IDs.
     """
+    cc = config.get_country("es")
+    normas_fijas = cc.source.get("normas_fijas", [])
     console.print("[bold]Fetch — downloading norms from BOE[/bold]\n")
     fetched = []
-    for boe_id in config.scope.normas_fijas:
+    for boe_id in normas_fijas:
         norm = fetch_one(config, boe_id, force=force)
         if norm is not None:
             fetched.append(boe_id)
@@ -92,10 +103,12 @@ def fetch_catalog(config: Config, force: bool = False) -> list[str]:
     """
     import requests
 
+    cc = config.get_country("es")
     console.print("[bold]Fetch catalog — downloading full BOE catalog[/bold]\n")
 
     # Paginate full catalog
-    base_url = f"{config.boe.base_url}/api/legislacion-consolidada"
+    boe_base_url = cc.source.get("base_url", "https://www.boe.es/datosabiertos")
+    base_url = f"{boe_base_url}/api/legislacion-consolidada"
     all_items: list[dict] = []
     offset = 0
     batch = 1000
@@ -127,7 +140,7 @@ def fetch_catalog(config: Config, force: bool = False) -> list[str]:
     errors = 0
     skipped = 0
     for i, boe_id in enumerate(in_scope, 1):
-        json_path = Path(config.data_dir) / "json" / f"{boe_id}.json"
+        json_path = Path(cc.data_dir) / "json" / f"{boe_id}.json"
         if json_path.exists() and not force:
             skipped += 1
             continue
@@ -147,7 +160,7 @@ def fetch_catalog(config: Config, force: bool = False) -> list[str]:
     console.print(f"\n[bold green]✓ {len(fetched)} new norms downloaded[/bold green]")
     console.print(f"  {skipped} already existed, {errors} errors")
 
-    total = len(list((Path(config.data_dir) / "json").glob("*.json")))
+    total = len(list((Path(cc.data_dir) / "json").glob("*.json")))
     console.print(f"  Total in data/: {total} norms")
 
     return fetched
@@ -171,6 +184,8 @@ def fetch_catalog_ccaa(config: Config, jurisdiction: str, force: bool = False) -
 
     from legalize.fetcher.es.metadata import _DEPT_TO_JURISDICTION
 
+    cc = config.get_country("es")
+
     # Reverse lookup: jurisdiction -> all matching departamento codes
     dept_codes = [code for code, jur in _DEPT_TO_JURISDICTION.items() if jur == jurisdiction]
 
@@ -181,7 +196,8 @@ def fetch_catalog_ccaa(config: Config, jurisdiction: str, force: bool = False) -
     console.print(f"[bold]Fetch CCAA catalog — {jurisdiction} (depts={dept_codes})[/bold]\n")
 
     # Paginate full catalog
-    base_url = f"{config.boe.base_url}/api/legislacion-consolidada"
+    boe_base_url = cc.source.get("base_url", "https://www.boe.es/datosabiertos")
+    base_url = f"{boe_base_url}/api/legislacion-consolidada"
     all_items: list[dict] = []
     offset = 0
     batch = 1000
@@ -217,7 +233,7 @@ def fetch_catalog_ccaa(config: Config, jurisdiction: str, force: bool = False) -
     errors = 0
     skipped = 0
     for i, boe_id in enumerate(in_scope, 1):
-        json_path = Path(config.data_dir) / "json" / f"{boe_id}.json"
+        json_path = Path(cc.data_dir) / "json" / f"{boe_id}.json"
         if json_path.exists() and not force:
             skipped += 1
             continue
