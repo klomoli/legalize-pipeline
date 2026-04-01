@@ -16,12 +16,18 @@ Legalize is a multi-country platform that converts official legislation into ver
 **Local structure:**
 ```
 ~/autonomo/legalize/
-├── engine/     ← this repo (legalize-pipeline)
-├── es/         ← Spanish laws (legalize-es)
-├── fr/         ← French laws (legalize-fr)
-├── se/         ← Swedish laws (legalize-se)
-├── hub/        ← hub repo (legalize)
-└── data/       ← XML + JSON cache (no git)
+├── engine/              ← this repo (legalize-pipeline)
+├── countries/
+│   ├── es/              ← Spanish laws (legalize-es)
+│   ├── fr/              ← French laws (legalize-fr)
+│   ├── at/              ← Austrian laws (legalize-at)
+│   ├── se/              ← Swedish laws (legalize-se)
+│   ├── data-es/         ← Spain XML + JSON cache (no git)
+│   ├── data-fr/         ← France data
+│   ├── data-at/         ← Austria data
+│   └── data-se/         ← Sweden data
+├── hub/                 ← hub repo (legalize)
+└── web/                 ← legalize.dev website
 ```
 
 **Website:** https://legalize.dev
@@ -166,6 +172,8 @@ fuente: "https://www.boe.es/eli/es/c/1978/12/27/(1)"
 **Commit messages:** `[reforma] Constitucion Espanola -- art. 49`
 **Author:** `Legalize <legalize@legalize.es>` (always)
 **Trailers:** `Source-Id`, `Source-Date`, `Norm-Id`
+
+**Commit integrity rule:** Each law's git history must contain ONLY commits that correspond to real legislative modifications (bootstrap + reforms). No fix-up commits, no pipeline corrections, no "update content" patches. If a bug in the pipeline produced incorrect Markdown, the fix is to reprocess the affected law (rewrite its commits from data/), never an additional commit on top. The commit history IS the legislative record -- it must not contain artifacts from pipeline bugs. Integrity is per-file, not per-repository: each law's commits are independent from other laws, so a single law can be reprocessed (its commits removed and recreated via filter-branch) without affecting the rest of the repo.
 
 ## Adding New Countries
 

@@ -1,6 +1,10 @@
 # legalize-pipeline
 
-The engine behind [legalize.dev](https://legalize.dev). Converts official legislation into version-controlled Markdown in Git.
+[![CI](https://github.com/legalize-dev/legalize-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/legalize-dev/legalize-pipeline/actions/workflows/ci.yml)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+The engine behind **[legalize.dev](https://legalize.dev)** -- converts official legislation into version-controlled Markdown in Git.
 
 Each law is a file. Each reform is a commit. Every country is a repo.
 
@@ -12,11 +16,12 @@ Each law is a file. Each reform is a commit. Every country is a repo.
 
 ## Public repos (output)
 
-| Country | Repo | Laws | Source |
-|---------|------|------|--------|
-| Spain | [legalize-es](https://github.com/legalize-dev/legalize-es) | 8,642 | BOE |
-| France | [legalize-fr](https://github.com/legalize-dev/legalize-fr) | 80 codes | LEGI (Legifrance) |
-| Sweden | [legalize-se](https://github.com/legalize-dev/legalize-se) | In progress | SFSR (Riksdag) |
+| Country | Repo | Source |
+|---------|------|--------|
+| Spain | [legalize-es](https://github.com/legalize-dev/legalize-es) | BOE |
+| France | [legalize-fr](https://github.com/legalize-dev/legalize-fr) | LEGI (Legifrance) |
+| Austria | [legalize-at](https://github.com/legalize-dev/legalize-at) | RIS (Bundeskanzleramt) |
+| Sweden | [legalize-se](https://github.com/legalize-dev/legalize-se) | SFSR (Riksdag) |
 
 ## Architecture
 
@@ -55,13 +60,20 @@ src/legalize/
   pipeline.py           # Generic orchestration (fetch, commit, bootstrap, daily, reprocess)
 ```
 
+## Prerequisites
+
+- Python 3.12+
+- Git
+
 ## Quick start
 
 ```bash
-# Install
+git clone https://github.com/legalize-dev/legalize-pipeline.git
+cd legalize-pipeline
+
 pip install -e ".[dev]"
 
-# Run tests (147 passing)
+# Run tests
 pytest tests/ -v
 
 # Lint
@@ -113,13 +125,16 @@ See [ADDING_A_COUNTRY.md](ADDING_A_COUNTRY.md) for the full walkthrough.
 
 ## Countries
 
-| Country | Status | Source | Laws | Repo |
-|---------|--------|--------|------|------|
-| Spain | Live | [BOE](https://www.boe.es/) | 8,642 | [legalize-es](https://github.com/legalize-dev/legalize-es) |
-| France | Beta | [Legifrance](https://www.legifrance.gouv.fr/) | 80 codes | [legalize-fr](https://github.com/legalize-dev/legalize-fr) |
-| Sweden | Beta | [Riksdag](https://www.riksdagen.se/) | In progress | [legalize-se](https://github.com/legalize-dev/legalize-se) |
-| Germany | Wanted | [BGBL](https://www.bgbl.de/) | -- | Help wanted! |
-| Portugal | Wanted | [DRE](https://dre.pt/) | -- | Help wanted! |
+| Country | Status | Source | Repo |
+|---------|--------|--------|------|
+| Spain | Live | [BOE](https://www.boe.es/) | [legalize-es](https://github.com/legalize-dev/legalize-es) |
+| France | Live | [Legifrance](https://www.legifrance.gouv.fr/) | [legalize-fr](https://github.com/legalize-dev/legalize-fr) |
+| Austria | Live | [RIS](https://www.ris.bka.gv.at/) | [legalize-at](https://github.com/legalize-dev/legalize-at) |
+| Sweden | Beta | [Riksdag](https://www.riksdagen.se/) | [legalize-se](https://github.com/legalize-dev/legalize-se) |
+| Germany | Wanted | [BGBL](https://www.bgbl.de/) | Help wanted! |
+| Portugal | Wanted | [DRE](https://dre.pt/) | Help wanted! |
+| Netherlands | Wanted | [Overheid.nl](https://www.overheid.nl/) | Help wanted! |
+| Brazil | Wanted | [LeXML](https://www.lexml.gov.br/) | Help wanted! |
 
 Want to add your country? See [ADDING_A_COUNTRY.md](ADDING_A_COUNTRY.md).
 
