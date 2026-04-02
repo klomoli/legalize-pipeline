@@ -1,8 +1,8 @@
 """Tests for the BOE sumario parser."""
 
-from legalize.config import ScopeConfig
+from legalize.fetcher.es.config import ScopeConfig
 from legalize.fetcher.es.sumario import parse_summary
-from legalize.models import Rango
+from legalize.models import Rank
 
 # Minimal XML that replicates the real BOE sumario structure
 SUMARIO_XML = b"""<?xml version="1.0" encoding="utf-8"?>
@@ -62,26 +62,26 @@ class TestParseSumario:
         # Section 2A items (appointments) not included
         assert "BOE-A-2026-6980" not in ids
 
-    def test_filters_by_rango(self):
-        """Filters by rangos in scope."""
-        scope = ScopeConfig(rangos=[Rango.LEY_ORGANICA])
+    def test_filters_by_rank(self):
+        """Filters by ranks in scope."""
+        scope = ScopeConfig(ranks=[Rank.LEY_ORGANICA])
         result = parse_summary(SUMARIO_XML, scope)
         # Only the LO should be present
         assert len(result) >= 1
-        lo_ids = [d.id_boe for d in result if d.rango == Rango.LEY_ORGANICA]
+        lo_ids = [d.id_boe for d in result if d.rank == Rank.LEY_ORGANICA]
         assert "BOE-A-2026-1001" in lo_ids
 
-    def test_infers_rango_from_title(self):
+    def test_infers_rank_from_title(self):
         scope = ScopeConfig()
         result = parse_summary(SUMARIO_XML, scope)
         lo = next(d for d in result if d.id_boe == "BOE-A-2026-1001")
-        assert lo.rango == Rango.LEY_ORGANICA
+        assert lo.rank == Rank.LEY_ORGANICA
 
     def test_extracts_department(self):
         scope = ScopeConfig()
         result = parse_summary(SUMARIO_XML, scope)
         lo = next(d for d in result if d.id_boe == "BOE-A-2026-1001")
-        assert lo.departamento == "CORTES GENERALES"
+        assert lo.department == "CORTES GENERALES"
 
     def test_extracts_url_xml(self):
         scope = ScopeConfig()

@@ -7,7 +7,7 @@ from collections.abc import Iterator
 from datetime import date
 from typing import TYPE_CHECKING, Any
 
-from legalize.models import NormaMetadata
+from legalize.models import NormMetadata
 
 if TYPE_CHECKING:
     from legalize.config import CountryConfig
@@ -75,12 +75,12 @@ class TextParser(ABC):
     """Base class for parsing consolidated text into structured blocks.
 
     Each country's XML/HTML format is different, but the output
-    is always a list of Bloque objects with version history.
+    is always a list of Block objects with version history.
     """
 
     @abstractmethod
     def parse_text(self, data: bytes) -> list[Any]:
-        """Parse consolidated text into a list of Bloque objects."""
+        """Parse consolidated text into a list of Block objects."""
 
     @abstractmethod
     def extract_reforms(self, data: bytes) -> list[Any]:
@@ -91,9 +91,9 @@ class MetadataParser(ABC):
     """Base class for parsing norm metadata.
 
     Each country has different metadata fields, rank hierarchies,
-    and status flags, but the output is always NormaMetadata.
+    and status flags, but the output is always NormMetadata.
     """
 
     @abstractmethod
-    def parse(self, data: bytes, norm_id: str) -> NormaMetadata:
-        """Parse raw metadata into NormaMetadata."""
+    def parse(self, data: bytes, norm_id: str) -> NormMetadata:
+        """Parse raw metadata into NormMetadata."""

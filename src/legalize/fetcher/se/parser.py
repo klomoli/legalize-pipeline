@@ -1,7 +1,7 @@
 """Parsers for Swedish legislation from the Riksdagen API.
 
 Parses the JSON document format from Riksdagen's open data API
-into structured Bloque objects and NormaMetadata.
+into structured Block objects and NormMetadata.
 
 Text parsing ported from the TypeScript riksdagen-provision-parser.ts,
 adapted for the legalize pipeline data model.
@@ -21,11 +21,11 @@ from typing import Any
 
 from legalize.fetcher.base import MetadataParser, TextParser
 from legalize.models import (
-    Bloque,
-    EstadoNorma,
-    NormaMetadata,
+    Block,
+    NormMetadata,
+    NormStatus,
     Paragraph,
-    Rango,
+    Rank,
     Reform,
     Version,
 )
@@ -33,18 +33,18 @@ from legalize.models import (
 logger = logging.getLogger(__name__)
 
 # ─────────────────────────────────────────────
-# Swedish Rango constants
+# Swedish Rank constants
 # ─────────────────────────────────────────────
 
-# Defined as Rango strings — consistent with how Spain/France do it.
-# Rango is a free-form str subclass, so any string is valid.
-_RANK_GRUNDLAG = Rango("grundlag")  # Fundamental law (constitution)
-_RANK_BALK = Rango("balk")  # Code (e.g. Brottsbalken)
-_RANK_LAG = Rango("lag")  # Act/Law
-_RANK_FORORDNING = Rango("forordning")  # Ordinance/Regulation
+# Defined as Rank strings — consistent with how Spain/France do it.
+# Rank is a free-form str subclass, so any string is valid.
+_RANK_GRUNDLAG = Rank("grundlag")  # Fundamental law (constitution)
+_RANK_BALK = Rank("balk")  # Code (e.g. Brottsbalken)
+_RANK_LAG = Rank("lag")  # Act/Law
+_RANK_FORORDNING = Rank("forordning")  # Ordinance/Regulation
 
 # ─────────────────────────────────────────────
-# Title → Rango detection
+# Title → Rank detection
 # ─────────────────────────────────────────────
 
 # Known fundamental laws (grundlag) by keyword in title
@@ -57,7 +57,7 @@ _GRUNDLAG_KEYWORDS = (
 )
 
 
-def _detect_rank(title: str) -> Rango:
+def _detect_rank(title: str) -> Rank:
     """Detect the normative rank from a Swedish statute title.
 
     Detection order (most specific first):
@@ -104,6 +104,7 @@ def _parse_date_se(date_str: str | None) -> date | None:
             return date.fromisoformat(match.group(1))
         return None
     except ValueError:
+        logger.debug("Could not parse date: %s", date_str)
         return None
 
 
@@ -457,9 +458,9 @@ def _parse_sfsr_html(html: str) -> list[Reform]:
 
         reforms.append(
             Reform(
-                fecha=reform_date,
-                id_norma=f"SFS {sfs_number}",
-                bloques_afectados=affected,
+                date=reform_date,
+                norm_id=f"SFS {sfs_number}",
+                affected_blocks=affected,
             )
         )
 
@@ -472,10 +473,10 @@ def _parse_sfsr_html(html: str) -> list[Reform]:
 
 
 class SwedishTextParser(TextParser):
-    """Parses Riksdagen JSON document text into Bloque objects."""
+    """Parses Riksdagen JSON document text into Block objects."""
 
     def parse_text(self, data: bytes) -> list[Any]:
-        """Parse the Riksdagen JSON into a list of Bloque objects.
+        """Parse the Riksdagen JSON into a list of Block objects.
 
         Extracts the text field from the JSON, then parses chapters
         and sections using regex patterns ported from the TypeScript
@@ -485,7 +486,7 @@ class SwedishTextParser(TextParser):
             data: Full Riksdagen document JSON as bytes.
 
         Returns:
-            List of Bloque objects (sections and articles).
+            List of Block objects (sections and articles).
         """
         text = _extract_text_from_json(data)
         if not text:
@@ -533,9 +534,9 @@ class SwedishTextParser(TextParser):
                     year = int(sfs[:4])
                     return [
                         Reform(
-                            fecha=date(year, 1, 1),
-                            id_norma=f"SFS {sfs}",
-                            bloques_afectados=(),
+                            date=date(year, 1, 1),
+                            norm_id=f"SFS {sfs}",
+                            affected_blocks=(),
                         )
                     ]
 
@@ -554,8 +555,8 @@ class SwedishTextParser(TextParser):
 class SwedishMetadataParser(MetadataParser):
     """Parses metadata from Riksdagen document JSON."""
 
-    def parse(self, data: bytes, norm_id: str) -> NormaMetadata:
-        """Parse Riksdagen JSON into NormaMetadata.
+    def parse(self, data: bytes, norm_id: str) -> NormMetadata:
+        """Parse Riksdagen JSON into NormMetadata.
 
         Extracts metadata from the dokumentstatus.dokument and
         dokumentstatus.dokuppgift fields.
@@ -565,7 +566,7 @@ class SwedishMetadataParser(MetadataParser):
             norm_id: The SFS number, e.g. "1962:700".
 
         Returns:
-            NormaMetadata with Swedish-specific fields.
+            NormMetadata with Swedish-specific fields.
 
         Raises:
             ValueError: If essential metadata cannot be extracted.
@@ -603,9 +604,9 @@ class SwedishMetadataParser(MetadataParser):
         modif_date = _parse_date_se(amended_through)
 
         # Status
-        status = EstadoNorma.VIGENTE
+        status = NormStatus.IN_FORCE
         if html_meta.get("Upphävd"):
-            status = EstadoNorma.DEROGADA
+            status = NormStatus.REPEALED
 
         # Rank
         rank = _detect_rank(title)
@@ -621,17 +622,17 @@ class SwedishMetadataParser(MetadataParser):
             f"dokument/svensk-forfattningssamling/sfs-{sfs_slug}"
         )
 
-        return NormaMetadata(
-            titulo=title,
-            titulo_corto=short_title,
-            identificador=identifier,
-            pais="se",
-            rango=rank,
-            fecha_publicacion=pub_date,
-            estado=status,
-            departamento="",
-            fuente=source_url,
-            fecha_ultima_modificacion=modif_date,
+        return NormMetadata(
+            title=title,
+            short_title=short_title,
+            identifier=identifier,
+            country="se",
+            rank=rank,
+            publication_date=pub_date,
+            status=status,
+            department="",
+            source=source_url,
+            last_modified=modif_date,
         )
 
 
@@ -671,13 +672,13 @@ def _short_title_se(raw_title: str, norm_id: str) -> str:
     return raw_title
 
 
-def _provisions_to_blocks(provisions: list[dict[str, Any]]) -> list[Bloque]:
-    """Convert parsed provisions to Bloque objects.
+def _provisions_to_blocks(provisions: list[dict[str, Any]]) -> list[Block]:
+    """Convert parsed provisions to Block objects.
 
-    Groups provisions by chapter, creating section Bloques for
-    chapter headings and article Bloques for individual sections.
+    Groups provisions by chapter, creating section Blocks for
+    chapter headings and article Blocks for individual sections.
     """
-    blocks: list[Bloque] = []
+    blocks: list[Block] = []
     current_chapter: str | None = None
 
     for prov in provisions:
@@ -695,15 +696,15 @@ def _provisions_to_blocks(provisions: list[dict[str, Any]]) -> list[Bloque]:
                 chapter_title = f"{chapter} kap. {title}"
 
             blocks.append(
-                Bloque(
+                Block(
                     id=f"kap_{chapter}",
-                    tipo="section",
-                    titulo=chapter_title,
+                    block_type="section",
+                    title=chapter_title,
                     versions=(
                         Version(
-                            id_norma="",
-                            fecha_publicacion=date(1900, 1, 1),
-                            fecha_vigencia=date(1900, 1, 1),
+                            norm_id="",
+                            publication_date=date(1900, 1, 1),
+                            effective_date=date(1900, 1, 1),
                             paragraphs=(
                                 Paragraph(
                                     css_class="titulo_tit",
@@ -735,15 +736,15 @@ def _provisions_to_blocks(provisions: list[dict[str, Any]]) -> list[Bloque]:
 
         if paragraphs:
             blocks.append(
-                Bloque(
+                Block(
                     id=provision_ref or f"s_{section}",
-                    tipo="article",
-                    titulo=f"{section} §" if section else provision_ref,
+                    block_type="article",
+                    title=f"{section} §" if section else provision_ref,
                     versions=(
                         Version(
-                            id_norma="",
-                            fecha_publicacion=date(1900, 1, 1),
-                            fecha_vigencia=date(1900, 1, 1),
+                            norm_id="",
+                            publication_date=date(1900, 1, 1),
+                            effective_date=date(1900, 1, 1),
                             paragraphs=tuple(paragraphs),
                         ),
                     ),

@@ -160,8 +160,8 @@ class GitRepo:
                     self._existing_commits.add((source_id, norm_id))
 
             logger.debug("Loaded %d existing commits", len(self._existing_commits))
-        except Exception:
-            pass
+        except subprocess.CalledProcessError:
+            logger.warning("Could not load existing commits", exc_info=True)
 
     def has_commit_with_source_id(self, source_id: str, norm_id: str | None = None) -> bool:
         """Checks whether a commit with this Source-Id + Norm-Id already exists."""
@@ -173,8 +173,8 @@ class GitRepo:
 
         return (source_id, norm_id) in self._existing_commits
 
-    def push(self, remote: str = "origin", branch: str = "main") -> None:
-        """Push to the remote."""
+    def push(self, remote: str = "origin", branch: str = "HEAD") -> None:
+        """Push to the remote (defaults to current branch)."""
         self._run(["push", remote, branch])
         logger.info("Push completed: %s/%s", remote, branch)
 

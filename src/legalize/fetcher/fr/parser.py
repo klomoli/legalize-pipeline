@@ -17,29 +17,29 @@ from lxml import etree
 
 from legalize.fetcher.base import MetadataParser, TextParser
 from legalize.models import (
-    Bloque,
-    EstadoNorma,
-    NormaMetadata,
+    Block,
+    NormMetadata,
+    NormStatus,
     Paragraph,
-    Rango,
+    Rank,
     Version,
 )
 
 logger = logging.getLogger(__name__)
 
 # ─────────────────────────────────────────────
-# LEGI NATURE → Rango mapping
+# LEGI NATURE → Rank mapping
 # ─────────────────────────────────────────────
 
-_NATURE_TO_RANK: dict[str, Rango] = {
-    "CODE": Rango.CODE,
-    "CONSTITUTION": Rango.CONSTITUTION_FR,
-    "LOI": Rango.LOI,
-    "LOI ORGANIQUE": Rango.LOI_ORGANIQUE,
-    "LOI_ORGANIQUE": Rango.LOI_ORGANIQUE,
-    "ORDONNANCE": Rango.ORDONNANCE,
-    "DECRET": Rango.DECRET,
-    "DÉCRET": Rango.DECRET,
+_NATURE_TO_RANK: dict[str, Rank] = {
+    "CODE": Rank.CODE,
+    "CONSTITUTION": Rank.CONSTITUTION_FR,
+    "LOI": Rank.LOI,
+    "LOI ORGANIQUE": Rank.LOI_ORGANIQUE,
+    "LOI_ORGANIQUE": Rank.LOI_ORGANIQUE,
+    "ORDONNANCE": Rank.ORDONNANCE,
+    "DECRET": Rank.DECRET,
+    "DÉCRET": Rank.DECRET,
 }
 
 # ─────────────────────────────────────────────
@@ -86,6 +86,7 @@ def _parse_date_legi(date_str: str) -> date | None:
             return None
         return parsed
     except ValueError:
+        logger.debug("Could not parse date: %s", date_str)
         return None
 
 
@@ -187,12 +188,12 @@ def _extract_contenu_paragraphs(article_el: etree._Element) -> list[Paragraph]:
 
 
 # ─────────────────────────────────────────────
-# Combined text parser → Bloque
+# Combined text parser → Block
 # ─────────────────────────────────────────────
 
 
-def _parse_legi_combined(data: bytes) -> list[Bloque]:
-    """Parses the combined XML from LEGIClient.get_text() into Bloques.
+def _parse_legi_combined(data: bytes) -> list[Block]:
+    """Parses the combined XML from LEGIClient.get_text() into Blocks.
 
     Input format: <legi_combined id="LEGITEXTXXX">
       <META>...</META>
@@ -219,12 +220,12 @@ def _parse_legi_combined(data: bytes) -> list[Bloque]:
             articles_by_cid.setdefault(cid, []).append(el)
 
     # Second pass: iterate in document order
-    blocks: list[Bloque] = []
+    blocks: list[Block] = []
     seen_cids: set[str] = set()
 
     for el in elements:
         if el.tag == "section":
-            block = _parse_section_bloque(el)
+            block = _parse_section_block(el)
             if block is not None:
                 blocks.append(block)
 
@@ -234,15 +235,15 @@ def _parse_legi_combined(data: bytes) -> list[Bloque]:
                 continue
             seen_cids.add(cid)
 
-            block = _parse_article_bloque(cid, articles_by_cid[cid])
+            block = _parse_article_block(cid, articles_by_cid[cid])
             if block is not None:
                 blocks.append(block)
 
     return blocks
 
 
-def _parse_section_bloque(section_el: etree._Element) -> Bloque | None:
-    """Creates a section Bloque (heading) from a <section> element."""
+def _parse_section_block(section_el: etree._Element) -> Block | None:
+    """Creates a section Block (heading) from a <section> element."""
     title = section_el.get("titre", "")
     if not title:
         return None
@@ -256,9 +257,9 @@ def _parse_section_bloque(section_el: etree._Element) -> Bloque | None:
 
     versions: list[Version] = [
         Version(
-            id_norma=section_el.get("id", ""),
-            fecha_publicacion=start_date,
-            fecha_vigencia=start_date,
+            norm_id=section_el.get("id", ""),
+            publication_date=start_date,
+            effective_date=start_date,
             paragraphs=(Paragraph(css_class=css_class, text=title),),
         )
     ]
@@ -270,23 +271,23 @@ def _parse_section_bloque(section_el: etree._Element) -> Bloque | None:
         if end_date is not None:
             versions.append(
                 Version(
-                    id_norma=section_el.get("id", ""),
-                    fecha_publicacion=end_date,
-                    fecha_vigencia=end_date,
+                    norm_id=section_el.get("id", ""),
+                    publication_date=end_date,
+                    effective_date=end_date,
                     paragraphs=(),
                 )
             )
 
-    return Bloque(
+    return Block(
         id=section_el.get("id", ""),
-        tipo="section",
-        titulo=title,
+        block_type="section",
+        title=title,
         versions=tuple(versions),
     )
 
 
-def _parse_article_bloque(cid: str, article_els: list[etree._Element]) -> Bloque | None:
-    """Creates an article Bloque with all its historical versions."""
+def _parse_article_block(cid: str, article_els: list[etree._Element]) -> Block | None:
+    """Creates an article Block with all its historical versions."""
     versions: list[Version] = []
     max_end_date: date | None = None
     all_abrogated = True
@@ -311,13 +312,13 @@ def _parse_article_bloque(cid: str, article_els: list[etree._Element]) -> Bloque
 
         # Source of the modification (JORFTEXT of the modifying text)
         source = art_el.find("source_modif")
-        id_norma = (source.get("id", "") if source is not None else "") or art_el.get("id", "")
+        norm_id = (source.get("id", "") if source is not None else "") or art_el.get("id", "")
 
         versions.append(
             Version(
-                id_norma=id_norma,
-                fecha_publicacion=start_date,
-                fecha_vigencia=start_date,
+                norm_id=norm_id,
+                publication_date=start_date,
+                effective_date=start_date,
                 paragraphs=tuple(paragraphs),
             )
         )
@@ -329,9 +330,9 @@ def _parse_article_bloque(cid: str, article_els: list[etree._Element]) -> Bloque
     if all_abrogated and max_end_date is not None:
         versions.append(
             Version(
-                id_norma="",
-                fecha_publicacion=max_end_date,
-                fecha_vigencia=max_end_date,
+                norm_id="",
+                publication_date=max_end_date,
+                effective_date=max_end_date,
                 paragraphs=(),
             )
         )
@@ -339,16 +340,16 @@ def _parse_article_bloque(cid: str, article_els: list[etree._Element]) -> Bloque
     num = article_els[0].get("num", "")
     title = f"Article {num}" if num else cid
 
-    return Bloque(
+    return Block(
         id=cid,
-        tipo="article",
-        titulo=title,
+        block_type="article",
+        title=title,
         versions=tuple(versions),
     )
 
 
 # ─────────────────────────────────────────────
-# LEGI metadata parser → NormaMetadata
+# LEGI metadata parser → NormMetadata
 # ─────────────────────────────────────────────
 
 
@@ -360,14 +361,14 @@ def _text_of(parent: etree._Element, tag: str) -> str:
     return ""
 
 
-def _parse_status(status_str: str) -> EstadoNorma:
-    """Converts LEGI ETAT to EstadoNorma."""
+def _parse_status(status_str: str) -> NormStatus:
+    """Converts LEGI ETAT to NormStatus."""
     status_upper = status_str.upper()
     if status_upper in ("ABROGE", "ABROGE_DIFF"):
-        return EstadoNorma.DEROGADA
+        return NormStatus.REPEALED
     if status_upper == "MODIFIE":
-        return EstadoNorma.PARCIALMENTE_DEROGADA
-    return EstadoNorma.VIGENTE
+        return NormStatus.PARTIALLY_REPEALED
+    return NormStatus.IN_FORCE
 
 
 def _build_legifrance_url(norm_id: str, nature: str) -> str:
@@ -402,7 +403,7 @@ def _short_title_fr(raw_title: str) -> str:
     return raw_title
 
 
-def _parse_metadata_legi(xml_data: bytes, norm_id: str) -> NormaMetadata:
+def _parse_metadata_legi(xml_data: bytes, norm_id: str) -> NormMetadata:
     """Parses metadata from a LEGI structure file.
 
     Extracts information from META/META_COMMUN and META/META_SPEC.
@@ -441,7 +442,7 @@ def _parse_metadata_legi(xml_data: bytes, norm_id: str) -> NormaMetadata:
     modif_date = _parse_date_legi(modif_date_str)
 
     # Rank
-    rank = _NATURE_TO_RANK.get(nature, Rango.OTRO)
+    rank = _NATURE_TO_RANK.get(nature, Rank.OTRO)
 
     # Autorite / Ministere as department
     department = _text_of(root, "AUTORITE") or _text_of(root, "MINISTERE") or ""
@@ -451,17 +452,17 @@ def _parse_metadata_legi(xml_data: bytes, norm_id: str) -> NormaMetadata:
 
     short_title = _short_title_fr(title)
 
-    return NormaMetadata(
-        titulo=title,
-        titulo_corto=short_title,
-        identificador=identifier,
-        pais="fr",
-        rango=rank,
-        fecha_publicacion=pub_date,
-        estado=_parse_status(status_str),
-        departamento=department,
-        fuente=source_url,
-        fecha_ultima_modificacion=modif_date,
+    return NormMetadata(
+        title=title,
+        short_title=short_title,
+        identifier=identifier,
+        country="fr",
+        rank=rank,
+        publication_date=pub_date,
+        status=_parse_status(status_str),
+        department=department,
+        source=source_url,
+        last_modified=modif_date,
     )
 
 
@@ -471,7 +472,7 @@ def _parse_metadata_legi(xml_data: bytes, norm_id: str) -> NormaMetadata:
 
 
 class LEGITextParser(TextParser):
-    """Parses the combined LEGI XML into Bloque objects."""
+    """Parses the combined LEGI XML into Block objects."""
 
     def parse_text(self, data: bytes) -> list[Any]:
         return _parse_legi_combined(data)
@@ -486,5 +487,5 @@ class LEGITextParser(TextParser):
 class LEGIMetadataParser(MetadataParser):
     """Parses metadata from a LEGI structure file."""
 
-    def parse(self, data: bytes, norm_id: str) -> NormaMetadata:
+    def parse(self, data: bytes, norm_id: str) -> NormMetadata:
         return _parse_metadata_legi(data, norm_id)

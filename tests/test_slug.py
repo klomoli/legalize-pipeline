@@ -2,51 +2,51 @@
 
 from datetime import date
 
-from legalize.models import EstadoNorma, NormaMetadata, Rango
+from legalize.models import NormMetadata, NormStatus, Rank
 from legalize.transformer.slug import norm_to_filepath
 
 
 def _make_metadata(
-    identificador: str = "BOE-A-2024-1",
-    pais: str = "es",
-    rango: Rango = Rango.LEY,
-    jurisdiccion: str | None = None,
-) -> NormaMetadata:
-    return NormaMetadata(
-        titulo="Test",
-        titulo_corto="Test",
-        identificador=identificador,
-        pais=pais,
-        rango=rango,
-        fecha_publicacion=date(2024, 1, 1),
-        estado=EstadoNorma.VIGENTE,
-        departamento="Test",
-        fuente="https://example.com",
-        jurisdiccion=jurisdiccion,
+    identifier: str = "BOE-A-2024-1",
+    country: str = "es",
+    rank: Rank = Rank.LEY,
+    jurisdiction: str | None = None,
+) -> NormMetadata:
+    return NormMetadata(
+        title="Test",
+        short_title="Test",
+        identifier=identifier,
+        country=country,
+        rank=rank,
+        publication_date=date(2024, 1, 1),
+        status=NormStatus.IN_FORCE,
+        department="Test",
+        source="https://example.com",
+        jurisdiction=jurisdiction,
     )
 
 
 class TestNormaToFilepath:
-    def test_state_level_uses_pais(self):
+    def test_state_level_uses_country(self):
         meta = _make_metadata("BOE-A-2015-11430")
         assert norm_to_filepath(meta) == "es/BOE-A-2015-11430.md"
 
-    def test_ccaa_uses_jurisdiccion(self):
-        meta = _make_metadata("BOE-A-2020-615", jurisdiccion="es-pv")
+    def test_ccaa_uses_jurisdiction(self):
+        meta = _make_metadata("BOE-A-2020-615", jurisdiction="es-pv")
         assert norm_to_filepath(meta) == "es-pv/BOE-A-2020-615.md"
 
     def test_france(self):
-        meta = _make_metadata("JORF-001", pais="fr")
+        meta = _make_metadata("JORF-001", country="fr")
         assert norm_to_filepath(meta) == "fr/JORF-001.md"
 
-    def test_filename_is_identificador(self):
+    def test_filename_is_identifier(self):
         meta = _make_metadata("BOE-A-1978-31229")
         assert norm_to_filepath(meta).endswith("BOE-A-1978-31229.md")
 
-    def test_no_rango_subfolder(self):
-        """Rango does not affect the path — it's in the YAML frontmatter."""
-        meta1 = _make_metadata("BOE-A-1978-31229", rango=Rango.CONSTITUCION)
-        meta2 = _make_metadata("BOE-A-1978-31229", rango=Rango.LEY)
+    def test_no_rank_subfolder(self):
+        """Rank does not affect the path — it's in the YAML frontmatter."""
+        meta1 = _make_metadata("BOE-A-1978-31229", rank=Rank.CONSTITUCION)
+        meta2 = _make_metadata("BOE-A-1978-31229", rank=Rank.LEY)
         assert norm_to_filepath(meta1) == norm_to_filepath(meta2)
 
     def test_flat_structure_no_subdirectories(self):
@@ -59,7 +59,7 @@ class TestNormaToFilepath:
             ("BOE-A-2020-615", "es", "es-pv"),
         ]
         for identifier, country, jurisdiction in countries:
-            meta = _make_metadata(identifier, pais=country, jurisdiccion=jurisdiction)
+            meta = _make_metadata(identifier, country=country, jurisdiction=jurisdiction)
             path = norm_to_filepath(meta)
             parts = path.split("/")
             assert len(parts) == 2, (

@@ -150,14 +150,6 @@ class LEGIClient(LegislativeClient):
         struct_path = text_dir / "texte" / "struct" / f"{norm_id}.xml"
         return struct_path.read_bytes()
 
-    def get_article(self, article_id: str) -> bytes:
-        """Reads the XML of an individual article (search by subpath)."""
-        subpath = _id_to_subpath(article_id)
-        # The article can be under article/ in any text directory
-        for article_path in self._base.rglob(f"article/{subpath}"):
-            return article_path.read_bytes()
-        raise FileNotFoundError(f"Article not found: {article_id}")
-
     def close(self) -> None:
         pass
 
@@ -254,7 +246,7 @@ class LEGIClient(LegislativeClient):
             structure_ta = section_root.find("STRUCTURE_TA")
             if structure_ta is not None:
                 self._walk_structure(structure_ta, target, text_dir)
-        except Exception:
+        except etree.XMLSyntaxError:
             logger.warning("Error reading section_ta %s", section_id, exc_info=True)
 
     def _embed_article_content(
@@ -301,5 +293,5 @@ class LEGIClient(LegislativeClient):
 
         except etree.XMLSyntaxError:
             logger.warning("Invalid XML for article %s", article_id)
-        except Exception:
+        except OSError:
             logger.warning("Error reading article %s", article_id, exc_info=True)

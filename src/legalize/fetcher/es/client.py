@@ -15,7 +15,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from legalize.config import BOEConfig
+from legalize.fetcher.es.config import BOEConfig
 from legalize.fetcher.cache import FileCache
 
 logger = logging.getLogger(__name__)
@@ -153,35 +153,6 @@ class BOEClient:
         """Fetches metadata for a norm: /api/legislacion-consolidada/id/{id}/metadatos."""
         path = f"/api/legislacion-consolidada/id/{id_boe}/metadatos"
         return self._fetch(self._build_url(path))
-
-    def get_index(self, id_boe: str) -> bytes:
-        """Fetches the block index: /api/legislacion-consolidada/id/{id}/texto/indice."""
-        path = f"/api/legislacion-consolidada/id/{id_boe}/texto/indice"
-        return self._fetch(self._build_url(path))
-
-    def get_catalog(
-        self,
-        rank: str | None = None,
-        start_date: date | None = None,
-        end_date: date | None = None,
-        offset: int = 0,
-    ) -> bytes:
-        """Queries the consolidated legislation catalog with filters."""
-        params: dict[str, str] = {}
-        if rank:
-            params["rango"] = rank
-        if start_date:
-            params["fecha_desde"] = start_date.isoformat()
-        if end_date:
-            params["fecha_hasta"] = end_date.isoformat()
-        if offset > 0:
-            params["offset"] = str(offset)
-
-        url = self._build_url("/api/legislacion-consolidada")
-        if params:
-            url += "?" + "&".join(f"{k}={v}" for k, v in params.items())
-
-        return self._fetch(url)
 
     def close(self) -> None:
         self._session.close()

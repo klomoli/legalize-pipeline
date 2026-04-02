@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from legalize.config import Config, GitConfig
-from legalize.models import EstadoNorma, NormaMetadata, Rango
+from legalize.config import Config, CountryConfig, GitConfig
+from legalize.models import NormMetadata, NormStatus, Rank
 from legalize.pipeline import bootstrap_from_local_xml
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
@@ -16,25 +16,31 @@ FIXTURES_DIR = Path(__file__).parent / "fixtures"
 @pytest.fixture
 def bootstrap_config(tmp_path) -> Config:
     """Config with temporary repo."""
+    repo_path = str(tmp_path / "repo")
     return Config(
-        git=GitConfig(repo_path=str(tmp_path / "repo")),
-        state_path=str(tmp_path / "state.json"),
-        mappings_path=str(tmp_path / "mappings.json"),
+        git=GitConfig(),
+        countries={
+            "es": CountryConfig(
+                repo_path=repo_path,
+                data_dir=str(tmp_path / "data"),
+                state_path=str(tmp_path / "state.json"),
+            ),
+        },
     )
 
 
 @pytest.fixture
-def constitucion_metadata() -> NormaMetadata:
-    return NormaMetadata(
-        titulo="Constitución Española",
-        titulo_corto="Constitución Española",
-        identificador="BOE-A-1978-31229",
-        pais="es",
-        rango=Rango.CONSTITUCION,
-        fecha_publicacion=date(1978, 12, 29),
-        estado=EstadoNorma.VIGENTE,
-        departamento="Cortes Generales",
-        fuente="https://www.boe.es/eli/es/c/1978/12/27/(1)",
+def constitucion_metadata() -> NormMetadata:
+    return NormMetadata(
+        title="Constitución Española",
+        short_title="Constitución Española",
+        identifier="BOE-A-1978-31229",
+        country="es",
+        rank=Rank.CONSTITUCION,
+        publication_date=date(1978, 12, 29),
+        status=NormStatus.IN_FORCE,
+        department="Cortes Generales",
+        source="https://www.boe.es/eli/es/c/1978/12/27/(1)",
     )
 
 
@@ -48,7 +54,7 @@ class TestBootstrapPipeline:
         xml_path = FIXTURES_DIR / "constitucion-sample.xml"
         bootstrap_from_local_xml(bootstrap_config, constitucion_metadata, xml_path)
 
-        md_path = Path(bootstrap_config.git.repo_path) / "es" / "BOE-A-1978-31229.md"
+        md_path = Path(bootstrap_config.get_country("es").repo_path) / "es" / "BOE-A-1978-31229.md"
         assert md_path.exists()
         content = md_path.read_text(encoding="utf-8")
         assert "Constitución Española" in content
@@ -60,7 +66,7 @@ class TestBootstrapPipeline:
 
         result = subprocess.run(
             ["git", "log", "--format=%ai", "--reverse"],
-            cwd=bootstrap_config.git.repo_path,
+            cwd=bootstrap_config.get_country("es").repo_path,
             capture_output=True,
             text=True,
         )
@@ -73,7 +79,7 @@ class TestBootstrapPipeline:
 
         result = subprocess.run(
             ["git", "log", "--format=%B", "-1"],
-            cwd=bootstrap_config.git.repo_path,
+            cwd=bootstrap_config.get_country("es").repo_path,
             capture_output=True,
             text=True,
         )
@@ -89,12 +95,13 @@ class TestBootstrapPipeline:
         assert count1 == 4
         assert count2 == 0  # no new commits on second run
 
-    def test_saves_mappings(self, bootstrap_config, constitucion_metadata):
+    def test_saves_json(self, bootstrap_config, constitucion_metadata):
         xml_path = FIXTURES_DIR / "constitucion-sample.xml"
         bootstrap_from_local_xml(bootstrap_config, constitucion_metadata, xml_path)
 
-        assert Path(bootstrap_config.mappings_path).exists()
-        assert Path(bootstrap_config.data_dir, "json", "BOE-A-1978-31229.json").exists()
+        assert Path(
+            bootstrap_config.get_country("es").data_dir, "json", "BOE-A-1978-31229.json"
+        ).exists()
 
     def test_dry_run_creates_no_commits(self, bootstrap_config, constitucion_metadata):
         xml_path = FIXTURES_DIR / "constitucion-sample.xml"
@@ -102,5 +109,5 @@ class TestBootstrapPipeline:
             bootstrap_config, constitucion_metadata, xml_path, dry_run=True
         )
         assert count == 0
-        repo_path = Path(bootstrap_config.git.repo_path)
+        repo_path = Path(bootstrap_config.get_country("es").repo_path)
         assert not (repo_path / ".git").exists()

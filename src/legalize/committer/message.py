@@ -20,19 +20,19 @@ import re
 
 from legalize.committer.author import resolve_author
 from legalize.models import (
-    Bloque,
+    Block,
     CommitInfo,
     CommitType,
-    NormaMetadata,
+    NormMetadata,
     Reform,
 )
 
 
 def build_commit_info(
     commit_type: CommitType,
-    norm_metadata: NormaMetadata,
+    norm_metadata: NormMetadata,
     reform: Reform,
-    blocks: list[Bloque] | tuple[Bloque, ...],
+    blocks: list[Block] | tuple[Block, ...],
     file_path: str,
     content: str,
 ) -> CommitInfo:
@@ -44,9 +44,9 @@ def build_commit_info(
     body = _build_body(commit_type, norm_metadata, reform, affected_str)
 
     trailers = {
-        "Source-Id": reform.id_norma,
-        "Source-Date": reform.fecha.isoformat(),
-        "Norm-Id": norm_metadata.identificador,
+        "Source-Id": reform.norm_id,
+        "Source-Date": reform.date.isoformat(),
+        "Norm-Id": norm_metadata.identifier,
     }
 
     author_name, author_email = resolve_author()
@@ -58,7 +58,7 @@ def build_commit_info(
         trailers=trailers,
         author_name=author_name,
         author_email=author_email,
-        author_date=reform.fecha,
+        author_date=reform.date,
         file_path=file_path,
         content=content,
     )
@@ -78,7 +78,7 @@ def format_commit_message(info: CommitInfo) -> str:
 
 def _build_subject(
     commit_type: CommitType,
-    metadata: NormaMetadata,
+    metadata: NormMetadata,
     reform: Reform,
     affected: list[str] | None = None,
 ) -> str:
@@ -87,10 +87,10 @@ def _build_subject(
     [reforma] Constitución Española — art. 49
     """
     prefix = f"[{commit_type.value}]"
-    title = metadata.titulo_corto
+    title = metadata.short_title
 
     if commit_type == CommitType.BOOTSTRAP:
-        return f"{prefix} {title} — versión original {reform.fecha.year}"
+        return f"{prefix} {title} — versión original {reform.date.year}"
 
     if commit_type == CommitType.FIX_PIPELINE:
         return f"{prefix} Regenerar {title}"
@@ -105,27 +105,27 @@ def _build_subject(
 
 def _build_body(
     commit_type: CommitType,
-    metadata: NormaMetadata,
+    metadata: NormMetadata,
     reform: Reform,
     affected_str: str,
 ) -> str:
     """Build the commit message body."""
-    date_str = reform.fecha.isoformat()
+    date_str = reform.date.isoformat()
 
     if commit_type == CommitType.BOOTSTRAP:
         return (
-            f"Publicación original de {metadata.titulo_corto}.\n"
+            f"Publicación original de {metadata.short_title}.\n"
             f"\n"
-            f"Norma: {metadata.identificador}\n"
+            f"Norma: {metadata.identifier}\n"
             f"Fecha: {date_str}\n"
-            f"Fuente: {metadata.fuente}"
+            f"Fuente: {metadata.source}"
         )
 
     return (
-        f"Norma: {metadata.identificador}\n"
-        f"Disposición: {reform.id_norma}\n"
+        f"Norma: {metadata.identifier}\n"
+        f"Disposición: {reform.norm_id}\n"
         f"Fecha: {date_str}\n"
-        f"Fuente: {metadata.fuente}\n"
+        f"Fuente: {metadata.source}\n"
         f"\n"
         f"Artículos afectados: {affected_str}"
     )
@@ -156,12 +156,12 @@ def _abbreviate_articles(articles: list[str]) -> str:
     return f"arts. {shown} y {len(nums) - 3} más"
 
 
-def _get_affected_articles(reform: Reform, blocks: list[Bloque] | tuple[Bloque, ...]) -> list[str]:
+def _get_affected_articles(reform: Reform, blocks: list[Block] | tuple[Block, ...]) -> list[str]:
     """Get titles of articles affected by a reform."""
     titles = []
     block_map = {b.id: b for b in blocks}
-    for bid in reform.bloques_afectados:
+    for bid in reform.affected_blocks:
         block = block_map.get(bid)
-        if block and block.titulo:
-            titles.append(block.titulo)
+        if block and block.title:
+            titles.append(block.title)
     return titles

@@ -1,6 +1,6 @@
 """Markdown generation from legislative blocks.
 
-Converts the Bloque/Version/Paragraph structure from BOE XML
+Converts the Block/Version/Paragraph structure from BOE XML
 into readable Markdown, with headings reflecting the legal hierarchy.
 """
 
@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Callable
 
-from legalize.models import Bloque, NormaMetadata, Paragraph
+from legalize.models import Block, NormMetadata, Paragraph
 from legalize.transformer.frontmatter import render_frontmatter
 from legalize.transformer.xml_parser import get_block_at_date
 
@@ -88,18 +88,22 @@ def render_paragraphs(paragraphs: list[Paragraph] | tuple[Paragraph, ...]) -> st
 
 
 def render_norm_at_date(
-    metadata: NormaMetadata,
-    blocks: list[Bloque] | tuple[Bloque, ...],
+    metadata: NormMetadata,
+    blocks: list[Block] | tuple[Block, ...],
     target_date: date,
+    include_all: bool = False,
 ) -> str:
     """Generates the complete Markdown for a norm at a given point in time.
 
-    Includes YAML frontmatter + H1 title + body with all blocks in effect.
+    Includes YAML frontmatter + H1 title + body with all blocks.
 
     Args:
         metadata: Norm metadata.
         blocks: List of blocks with their historical versions.
         target_date: Date for which to generate the version.
+        include_all: If True, include ALL blocks even if they have no version
+            at target_date (uses the earliest available version as fallback).
+            Set to True for bootstrap commits to get the complete law.
 
     Returns:
         String with the complete Markdown document.
@@ -110,12 +114,17 @@ def render_norm_at_date(
     parts.append(render_frontmatter(metadata, target_date))
 
     # H1 title (without trailing period)
-    title = metadata.titulo.rstrip(". ").strip()
+    title = metadata.title.rstrip(". ").strip()
     parts.append(f"# {title}\n\n")
 
     # Blocks in effect at the date
     for block in blocks:
         version = get_block_at_date(block, target_date)
+
+        # Fallback: if include_all, use the earliest version available
+        if version is None and include_all and block.versions:
+            version = min(block.versions, key=lambda v: v.publication_date)
+
         if version is None:
             continue
 

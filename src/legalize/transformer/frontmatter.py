@@ -2,14 +2,14 @@
 
 Generic multi-country format:
   ---
-  titulo: "Constitución Española"
-  identificador: "BOE-A-1978-31229"
-  pais: "es"
-  rango: "constitucion"
-  fecha_publicacion: "1978-12-29"
-  ultima_actualizacion: "2024-02-17"
-  estado: "vigente"
-  fuente: "https://www.boe.es/eli/es/c/1978/12/27/(1)"
+  title: "Constitución Española"
+  identifier: "BOE-A-1978-31229"
+  country: "es"
+  rank: "constitucion"
+  publication_date: "1978-12-29"
+  last_updated: "2024-02-17"
+  status: "vigente"
+  source: "https://www.boe.es/eli/es/c/1978/12/27/(1)"
   ---
 """
 
@@ -17,35 +17,35 @@ from __future__ import annotations
 
 from datetime import date
 
-from legalize.models import EstadoNorma, NormaMetadata
+from legalize.models import NormMetadata, NormStatus
 
 
-def render_frontmatter(metadata: NormaMetadata, version_date: date) -> str:
+def render_frontmatter(metadata: NormMetadata, version_date: date) -> str:
     """Generates the YAML frontmatter block for a norm at a given date."""
-    title = _clean_title(metadata.titulo)
+    clean_title = _clean_title(metadata.title)
 
     lines = [
         "---",
-        f'titulo: "{_escape_yaml(title)}"',
-        f'identificador: "{metadata.identificador}"',
-        f'pais: "{metadata.pais}"',
+        f'title: "{_escape_yaml(clean_title)}"',
+        f'identifier: "{metadata.identifier}"',
+        f'country: "{metadata.country}"',
     ]
 
-    if metadata.jurisdiccion:
-        lines.append(f'jurisdiccion: "{metadata.jurisdiccion}"')
+    if metadata.jurisdiction:
+        lines.append(f'jurisdiction: "{metadata.jurisdiction}"')
 
     lines.extend(
         [
-            f'rango: "{metadata.rango}"',
-            f'fecha_publicacion: "{metadata.fecha_publicacion.isoformat()}"',
-            f'ultima_actualizacion: "{version_date.isoformat()}"',
-            f'estado: "{metadata.estado.value if isinstance(metadata.estado, EstadoNorma) else metadata.estado}"',
-            f'fuente: "{metadata.fuente}"',
+            f'rank: "{metadata.rank}"',
+            f'publication_date: "{metadata.publication_date.isoformat()}"',
+            f'last_updated: "{version_date.isoformat()}"',
+            f'status: "{metadata.status.value if isinstance(metadata.status, NormStatus) else metadata.status}"',
+            f'source: "{metadata.source}"',
         ]
     )
 
-    if metadata.url_pdf:
-        lines.append(f'url_pdf: "{metadata.url_pdf}"')
+    if metadata.pdf_url:
+        lines.append(f'pdf_url: "{metadata.pdf_url}"')
 
     lines.append("---")
     lines.append("")

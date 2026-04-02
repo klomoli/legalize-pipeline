@@ -18,16 +18,16 @@ class TestParseTextoXml:
         blocks = parse_text_xml(constitucion_xml)
         for block in blocks:
             assert isinstance(block.id, str)
-            assert isinstance(block.tipo, str)
-            assert isinstance(block.titulo, str)
+            assert isinstance(block.block_type, str)
+            assert isinstance(block.title, str)
             assert isinstance(block.versions, tuple)
 
     def test_version_has_date_objects(self, constitucion_xml: bytes):
         blocks = parse_text_xml(constitucion_xml)
         for block in blocks:
             for version in block.versions:
-                assert isinstance(version.fecha_publicacion, date)
-                assert isinstance(version.fecha_vigencia, date)
+                assert isinstance(version.publication_date, date)
+                assert isinstance(version.effective_date, date)
 
     def test_paragraphs_are_tuples(self, constitucion_xml: bytes):
         blocks = parse_text_xml(constitucion_xml)
@@ -58,20 +58,20 @@ class TestExtractReforms:
     def test_reforms_are_chronological(self, constitucion_xml: bytes):
         blocks = parse_text_xml(constitucion_xml)
         reforms = extract_reforms(blocks)
-        dates = [r.fecha for r in reforms]
+        dates = [r.date for r in reforms]
         assert dates == sorted(dates)
 
     def test_first_reform_is_original(self, constitucion_xml: bytes):
         blocks = parse_text_xml(constitucion_xml)
         reforms = extract_reforms(blocks)
-        assert reforms[0].id_norma == "BOE-A-1978-31229"
-        assert reforms[0].fecha == date(1978, 12, 29)
+        assert reforms[0].norm_id == "BOE-A-1978-31229"
+        assert reforms[0].date == date(1978, 12, 29)
 
     def test_last_reform_is_2024(self, constitucion_xml: bytes):
         blocks = parse_text_xml(constitucion_xml)
         reforms = extract_reforms(blocks)
-        assert reforms[-1].id_norma == "BOE-A-2024-3099"
-        assert reforms[-1].fecha == date(2024, 2, 17)
+        assert reforms[-1].norm_id == "BOE-A-2024-3099"
+        assert reforms[-1].date == date(2024, 2, 17)
 
     def test_reform_dates(self, constitucion_xml: bytes):
         blocks = parse_text_xml(constitucion_xml)
@@ -82,28 +82,28 @@ class TestExtractReforms:
             date(2011, 9, 27),
             date(2024, 2, 17),
         ]
-        assert [r.fecha for r in reforms] == expected_dates
+        assert [r.date for r in reforms] == expected_dates
 
-    def test_reform_bloques_afectados(self, constitucion_xml: bytes):
+    def test_reform_affected_blocks(self, constitucion_xml: bytes):
         blocks = parse_text_xml(constitucion_xml)
         reforms = extract_reforms(blocks)
 
         # The original publication affects all blocks
-        assert len(reforms[0].bloques_afectados) == 17
+        assert len(reforms[0].affected_blocks) == 17
 
         # Subsequent reforms affect a single block each
         for reform in reforms[1:]:
-            assert len(reform.bloques_afectados) == 1
+            assert len(reform.affected_blocks) == 1
 
 
-class TestGetBloqueAtDate:
+class TestGetBlockAtDate:
     def test_original_version(self, constitucion_xml: bytes):
         blocks = parse_text_xml(constitucion_xml)
         art13 = next(b for b in blocks if b.id == "a13")
 
         version = get_block_at_date(art13, date(1990, 1, 1))
         assert version is not None
-        assert version.id_norma == "BOE-A-1978-31229"
+        assert version.norm_id == "BOE-A-1978-31229"
 
     def test_reformed_version(self, constitucion_xml: bytes):
         blocks = parse_text_xml(constitucion_xml)
@@ -111,7 +111,7 @@ class TestGetBloqueAtDate:
 
         version = get_block_at_date(art13, date(2000, 1, 1))
         assert version is not None
-        assert version.id_norma == "BOE-A-1992-20403"
+        assert version.norm_id == "BOE-A-1992-20403"
 
     def test_before_publication_returns_none(self, constitucion_xml: bytes):
         blocks = parse_text_xml(constitucion_xml)

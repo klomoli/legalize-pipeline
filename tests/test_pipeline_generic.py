@@ -1,8 +1,7 @@
 """Tests for the generic multi-country pipeline.
 
 Covers: CountryConfig, countries dispatch, storage round-trip,
-IdToFilename reverse index, StateStore persistence, and
-generic pipeline helpers.
+StateStore persistence, and generic pipeline helpers.
 """
 
 from __future__ import annotations
@@ -23,17 +22,16 @@ from legalize.countries import (
     supported_countries,
 )
 from legalize.models import (
-    Bloque,
-    EstadoNorma,
-    NormaCompleta,
-    NormaMetadata,
+    Block,
+    NormMetadata,
+    NormStatus,
     Paragraph,
-    Rango,
+    ParsedNorm,
+    Rank,
     Reform,
     Version,
 )
 from legalize.pipeline import _extract_reforms_generic
-from legalize.state.mappings import IdToFilename
 from legalize.state.store import StateStore
 from legalize.storage import load_norma_from_json, save_structured_json
 
@@ -44,11 +42,11 @@ from legalize.storage import load_norma_from_json, save_structured_json
 
 
 def _make_norma(
-    identificador: str = "TEST-001",
-    pais: str = "es",
+    identifier: str = "TEST-001",
+    country: str = "es",
     css_classes: list[str] | None = None,
-) -> NormaCompleta:
-    """Build a minimal NormaCompleta for testing."""
+) -> ParsedNorm:
+    """Build a minimal ParsedNorm for testing."""
     paragraphs = []
     if css_classes:
         for i, cls in enumerate(css_classes):
@@ -57,37 +55,37 @@ def _make_norma(
         paragraphs.append(Paragraph(css_class="parrafo", text="Texto del articulo 1."))
 
     version = Version(
-        id_norma=identificador,
-        fecha_publicacion=date(2024, 1, 1),
-        fecha_vigencia=date(2024, 1, 1),
+        norm_id=identifier,
+        publication_date=date(2024, 1, 1),
+        effective_date=date(2024, 1, 1),
         paragraphs=tuple(paragraphs),
     )
-    block = Bloque(
+    block = Block(
         id="a1",
-        tipo="precepto",
-        titulo="Articulo 1",
+        block_type="precepto",
+        title="Articulo 1",
         versions=(version,),
     )
-    metadata = NormaMetadata(
-        titulo="Ley de Pruebas",
-        titulo_corto="Ley Pruebas",
-        identificador=identificador,
-        pais=pais,
-        rango=Rango("ley"),
-        fecha_publicacion=date(2024, 1, 1),
-        estado=EstadoNorma.VIGENTE,
-        departamento="Test",
-        fuente="https://example.com/test",
-        fecha_ultima_modificacion=date(2024, 6, 1),
+    metadata = NormMetadata(
+        title="Ley de Pruebas",
+        short_title="Ley Pruebas",
+        identifier=identifier,
+        country=country,
+        rank=Rank("ley"),
+        publication_date=date(2024, 1, 1),
+        status=NormStatus.IN_FORCE,
+        department="Test",
+        source="https://example.com/test",
+        last_modified=date(2024, 6, 1),
     )
     reform = Reform(
-        fecha=date(2024, 1, 1),
-        id_norma=identificador,
-        bloques_afectados=("a1",),
+        date=date(2024, 1, 1),
+        norm_id=identifier,
+        affected_blocks=("a1",),
     )
-    return NormaCompleta(
+    return ParsedNorm(
         metadata=metadata,
-        bloques=(block,),
+        blocks=(block,),
         reforms=(reform,),
     )
 
@@ -100,11 +98,11 @@ def _make_norma(
 class TestCountryConfig:
     def test_get_country_from_yaml(self):
         """Config with countries section returns correct CountryConfig."""
-        cc_se = CountryConfig(repo_path="../se", data_dir="../data-se")
+        cc_se = CountryConfig(repo_path="../countries/se", data_dir="../countries/data-se")
         config = Config(countries={"se": cc_se})
         result = config.get_country("se")
-        assert result.repo_path == "../se"
-        assert result.data_dir == "../data-se"
+        assert result.repo_path == "../countries/se"
+        assert result.data_dir == "../countries/data-se"
 
     def test_get_country_without_countries_section_raises(self):
         """Config without countries section raises ValueError."""
@@ -114,17 +112,18 @@ class TestCountryConfig:
 
     def test_get_country_unknown_raises(self):
         """Requesting unknown country raises ValueError."""
-        config = Config(country="es")
-        with pytest.raises(ValueError, match="Country 'xx' not configured"):
+        config = Config()
+        with pytest.raises(ValueError, match="not configured"):
             config.get_country("xx")
 
     def test_country_config_defaults_state_path(self):
         """Empty state_path gets default .pipeline/{code}/state.json."""
-        cc = CountryConfig(repo_path="../se", data_dir="../data-se", state_path="")
+        cc = CountryConfig(
+            repo_path="../countries/se", data_dir="../countries/data-se", state_path=""
+        )
         config = Config(countries={"se": cc})
         result = config.get_country("se")
         assert result.state_path == ".pipeline/se/state.json"
-        assert result.mappings_path == ".pipeline/se/mappings.json"
 
     def test_supported_countries(self):
         """supported_countries() returns sorted list of registered codes."""
@@ -189,29 +188,29 @@ class TestCountriesDispatch:
 
 class TestStorageRoundTrip:
     def test_save_and_load_norma(self, tmp_path):
-        """Create a NormaCompleta, save to JSON, load back, verify all fields match."""
+        """Create a ParsedNorm, save to JSON, load back, verify all fields match."""
         norm = _make_norma()
         save_structured_json(str(tmp_path), norm)
 
-        json_path = tmp_path / "json" / f"{norm.metadata.identificador}.json"
+        json_path = tmp_path / "json" / f"{norm.metadata.identifier}.json"
         assert json_path.exists()
 
         loaded = load_norma_from_json(json_path)
-        assert loaded.metadata.identificador == norm.metadata.identificador
-        assert loaded.metadata.titulo == norm.metadata.titulo.rstrip(". ")
-        assert loaded.metadata.pais == norm.metadata.pais
-        assert loaded.metadata.rango == norm.metadata.rango
-        assert loaded.metadata.fecha_publicacion == norm.metadata.fecha_publicacion
-        assert loaded.metadata.estado == norm.metadata.estado
-        assert len(loaded.bloques) == len(norm.bloques)
+        assert loaded.metadata.identifier == norm.metadata.identifier
+        assert loaded.metadata.title == norm.metadata.title.rstrip(". ")
+        assert loaded.metadata.country == norm.metadata.country
+        assert loaded.metadata.rank == norm.metadata.rank
+        assert loaded.metadata.publication_date == norm.metadata.publication_date
+        assert loaded.metadata.status == norm.metadata.status
+        assert len(loaded.blocks) == len(norm.blocks)
         assert len(loaded.reforms) == len(norm.reforms)
 
         # Check block content round-trips
-        orig_block = norm.bloques[0]
-        loaded_block = loaded.bloques[0]
+        orig_block = norm.blocks[0]
+        loaded_block = loaded.blocks[0]
         assert loaded_block.id == orig_block.id
-        assert loaded_block.tipo == orig_block.tipo
-        assert loaded_block.titulo == orig_block.titulo
+        assert loaded_block.block_type == orig_block.block_type
+        assert loaded_block.title == orig_block.title
         assert len(loaded_block.versions) == len(orig_block.versions)
 
     def test_css_class_round_trip(self, tmp_path):
@@ -219,10 +218,10 @@ class TestStorageRoundTrip:
         norm = _make_norma(css_classes=["titulo_articulo", "parrafo", "lista_letra"])
         save_structured_json(str(tmp_path), norm)
 
-        json_path = tmp_path / "json" / f"{norm.metadata.identificador}.json"
+        json_path = tmp_path / "json" / f"{norm.metadata.identifier}.json"
         loaded = load_norma_from_json(json_path)
 
-        loaded_paragraphs = loaded.bloques[0].versions[0].paragraphs
+        loaded_paragraphs = loaded.blocks[0].versions[0].paragraphs
         assert len(loaded_paragraphs) == 3
         assert loaded_paragraphs[0].css_class == "titulo_articulo"
         assert loaded_paragraphs[1].css_class == "parrafo"
@@ -233,16 +232,16 @@ class TestStorageRoundTrip:
         # Simulate old JSON format (no css_classes key in versions)
         data = {
             "metadata": {
-                "titulo": "Ley Antigua",
-                "titulo_corto": "Ley Antigua",
-                "identificador": "OLD-001",
-                "pais": "es",
-                "rango": "ley",
-                "fecha_publicacion": "2020-01-01",
-                "ultima_actualizacion": "2020-01-01",
-                "estado": "vigente",
-                "departamento": "Test",
-                "fuente": "https://example.com",
+                "title": "Ley Antigua",
+                "short_title": "Ley Antigua",
+                "identifier": "OLD-001",
+                "country": "es",
+                "rank": "ley",
+                "publication_date": "2020-01-01",
+                "last_updated": "2020-01-01",
+                "status": "vigente",
+                "department": "Test",
+                "source": "https://example.com",
             },
             "articles": [
                 {
@@ -273,40 +272,9 @@ class TestStorageRoundTrip:
         json_path.write_text(json.dumps(data), encoding="utf-8")
 
         loaded = load_norma_from_json(json_path)
-        paragraphs = loaded.bloques[0].versions[0].paragraphs
+        paragraphs = loaded.blocks[0].versions[0].paragraphs
         assert len(paragraphs) == 2
         assert all(p.css_class == "parrafo" for p in paragraphs)
-
-
-# ─────────────────────────────────────────────
-# TestMappingsReverseIndex
-# ─────────────────────────────────────────────
-
-
-class TestMappingsReverseIndex:
-    def test_set_and_reverse_lookup(self, tmp_path):
-        """set(id, path) then get_by_filepath(path) returns id."""
-        m = IdToFilename(tmp_path / "mappings.json")
-        m.set("BOE-A-2024-001", "spain/BOE-A-2024-001.md")
-        assert m.get_by_filepath("spain/BOE-A-2024-001.md") == "BOE-A-2024-001"
-
-    def test_reverse_lookup_after_load(self, tmp_path):
-        """save, reload, verify reverse lookup works."""
-        path = tmp_path / "mappings.json"
-
-        m1 = IdToFilename(path)
-        m1.set("BOE-A-2024-002", "spain/BOE-A-2024-002.md")
-        m1.save()
-
-        m2 = IdToFilename(path)
-        m2.load()
-        assert m2.get_by_filepath("spain/BOE-A-2024-002.md") == "BOE-A-2024-002"
-        assert m2.get("BOE-A-2024-002") == "spain/BOE-A-2024-002.md"
-
-    def test_reverse_lookup_missing(self, tmp_path):
-        """get_by_filepath for unknown path returns None."""
-        m = IdToFilename(tmp_path / "mappings.json")
-        assert m.get_by_filepath("nonexistent/path.md") is None
 
 
 # ─────────────────────────────────────────────
@@ -320,12 +288,6 @@ class TestStateStorePersistence:
         state_path = tmp_path / "state.json"
         data = {
             "last_summary": "2024-03-15",
-            "norms_processed": {
-                "BOE-A-1978-31229": {
-                    "last_version_applied": "2024-02-17",
-                    "total_versions_applied": 12,
-                }
-            },
             "runs": [
                 {
                     "timestamp": "2024-03-15T10:30:00",
@@ -341,24 +303,16 @@ class TestStateStorePersistence:
         store.load()
 
         assert store.last_summary_date == date(2024, 3, 15)
-        ns = store.get_norm_state("BOE-A-1978-31229")
-        assert ns is not None
-        assert ns.last_version_applied == "2024-02-17"
-        assert ns.total_versions_applied == 12
 
     def test_save_json_structure(self, tmp_path):
         """Save state, read raw JSON, verify key structure."""
         state_path = tmp_path / "state.json"
         store = StateStore(state_path)
         store.last_summary_date = date(2024, 6, 1)
-        store.mark_norma_processed("TEST-001", date(2024, 6, 1), 3)
         store.save()
 
         raw = json.loads(state_path.read_text(encoding="utf-8"))
         assert raw["last_summary"] == "2024-06-01"
-        assert "TEST-001" in raw["norms_processed"]
-        assert raw["norms_processed"]["TEST-001"]["last_version_applied"] == "2024-06-01"
-        assert raw["norms_processed"]["TEST-001"]["total_versions_applied"] == 3
         assert isinstance(raw["runs"], list)
 
     def test_round_trip(self, tmp_path):
@@ -367,7 +321,6 @@ class TestStateStorePersistence:
 
         store1 = StateStore(state_path)
         store1.last_summary_date = date(2024, 7, 1)
-        store1.mark_norma_processed("ROUND-001", date(2024, 7, 1), 5)
         store1.record_run(summaries=["2024-07-01"], commits=10, errors=["minor issue"])
         store1.save()
 
@@ -375,10 +328,6 @@ class TestStateStorePersistence:
         store2.load()
 
         assert store2.last_summary_date == date(2024, 7, 1)
-        assert store2.norms_count == 1
-        ns = store2.get_norm_state("ROUND-001")
-        assert ns is not None
-        assert ns.total_versions_applied == 5
 
 
 # ─────────────────────────────────────────────
@@ -395,15 +344,15 @@ class TestGenericPipeline:
         assert not hasattr(mock_parser, "extract_reforms_from_sfsr")
 
         blocks = [
-            Bloque(
+            Block(
                 id="a1",
-                tipo="precepto",
-                titulo="Articulo 1",
+                block_type="precepto",
+                title="Articulo 1",
                 versions=(
                     Version(
-                        id_norma="TEST-001",
-                        fecha_publicacion=date(2024, 1, 1),
-                        fecha_vigencia=date(2024, 1, 1),
+                        norm_id="TEST-001",
+                        publication_date=date(2024, 1, 1),
+                        effective_date=date(2024, 1, 1),
                         paragraphs=(Paragraph(css_class="parrafo", text="text"),),
                     ),
                 ),
@@ -420,9 +369,9 @@ class TestGenericPipeline:
         mock_parser = MagicMock()
         mock_parser.extract_reforms_from_sfsr.return_value = [
             Reform(
-                fecha=date(2024, 3, 1),
-                id_norma="SFS-2024:100",
-                bloques_afectados=(),
+                date=date(2024, 3, 1),
+                norm_id="SFS-2024:100",
+                affected_blocks=(),
             )
         ]
 
@@ -431,7 +380,7 @@ class TestGenericPipeline:
 
         result = _extract_reforms_generic(mock_parser, mock_client, "SFS-2024:1", [])
         assert len(result) == 1
-        assert result[0].id_norma == "SFS-2024:100"
+        assert result[0].norm_id == "SFS-2024:100"
         mock_client.get_amendment_register.assert_called_once_with("SFS-2024:1")
         mock_parser.extract_reforms_from_sfsr.assert_called_once_with(b"<html>sfsr data</html>")
 
@@ -444,15 +393,15 @@ class TestGenericPipeline:
         mock_client.get_amendment_register.side_effect = Exception("Network error")
 
         blocks = [
-            Bloque(
+            Block(
                 id="a1",
-                tipo="precepto",
-                titulo="Articulo 1",
+                block_type="precepto",
+                title="Articulo 1",
                 versions=(
                     Version(
-                        id_norma="SFS-2024:1",
-                        fecha_publicacion=date(2024, 1, 1),
-                        fecha_vigencia=date(2024, 1, 1),
+                        norm_id="SFS-2024:1",
+                        publication_date=date(2024, 1, 1),
+                        effective_date=date(2024, 1, 1),
                         paragraphs=(Paragraph(css_class="parrafo", text="text"),),
                     ),
                 ),

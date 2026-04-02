@@ -28,10 +28,20 @@ class BOEDiscovery(NormDiscovery):
         self, client: LegislativeClient, target_date: date, **kwargs
     ) -> Iterator[str]:
         """Discover norms from a BOE daily sumario."""
+        from legalize.fetcher.es.config import ScopeConfig
         from legalize.fetcher.es.sumario import parse_summary
 
-        scope = kwargs.get("scope", self.config.scope if self.config else None)
+        if "scope" in kwargs:
+            scope = kwargs["scope"]
+        elif self.config:
+            cc = self.config.get_country("es")
+            scope = ScopeConfig(
+                ranks=cc.source.get("rangos", []),
+                fixed_norms=cc.source.get("normas_fijas", []),
+            )
+        else:
+            scope = ScopeConfig()
         xml_data = client.get_sumario(target_date)
         dispositions = parse_summary(xml_data, scope)
         for disp in dispositions:
-            yield disp.id_norma
+            yield disp.id_boe

@@ -26,7 +26,7 @@ from legalize.fetcher.fr.parser import (
     _parse_legi_combined,
     _short_title_fr,
 )
-from legalize.models import EstadoNorma, Rango
+from legalize.models import NormStatus, Rank
 
 
 # ─────────────────────────────────────────────
@@ -277,58 +277,58 @@ class TestParseLEGICombined:
 
     def test_sections(self):
         blocks = _parse_legi_combined(COMBINED_XML_SIMPLE)
-        sections = [b for b in blocks if b.tipo == "section"]
+        sections = [b for b in blocks if b.block_type == "section"]
         assert len(sections) == 2
-        assert "souveraineté" in sections[0].titulo
-        assert "Président" in sections[1].titulo
+        assert "souveraineté" in sections[0].title
+        assert "Président" in sections[1].title
 
     def test_article_with_two_versions(self):
         """Article 1 has 2 versions (1958 and 2008), grouped by cid."""
         blocks = _parse_legi_combined(COMBINED_XML_SIMPLE)
-        articles = [b for b in blocks if b.tipo == "article"]
-        art1 = [a for a in articles if "1" in a.titulo][0]
+        articles = [b for b in blocks if b.block_type == "article"]
+        art1 = [a for a in articles if "1" in a.title][0]
         assert len(art1.versions) == 2
-        dates = [v.fecha_publicacion for v in art1.versions]
+        dates = [v.publication_date for v in art1.versions]
         assert date(1958, 10, 5) in dates
         assert date(2008, 7, 24) in dates
 
     def test_article_source_modif(self):
         """The 2008 version of article 1 has source_modif JORFTEXT."""
         blocks = _parse_legi_combined(COMBINED_XML_SIMPLE)
-        articles = [b for b in blocks if b.tipo == "article"]
-        art1 = [a for a in articles if "1" in a.titulo][0]
-        version_2008 = [v for v in art1.versions if v.fecha_publicacion == date(2008, 7, 24)][0]
-        assert version_2008.id_norma == "JORFTEXT000017237542"
+        articles = [b for b in blocks if b.block_type == "article"]
+        art1 = [a for a in articles if "1" in a.title][0]
+        version_2008 = [v for v in art1.versions if v.publication_date == date(2008, 7, 24)][0]
+        assert version_2008.norm_id == "JORFTEXT000017237542"
 
     def test_article_single_version(self):
         """Article 5 has a single version."""
         blocks = _parse_legi_combined(COMBINED_XML_SIMPLE)
-        articles = [b for b in blocks if b.tipo == "article"]
-        art5 = [a for a in articles if "5" in a.titulo][0]
+        articles = [b for b in blocks if b.block_type == "article"]
+        art5 = [a for a in articles if "5" in a.title][0]
         assert len(art5.versions) == 1
-        assert art5.versions[0].fecha_publicacion == date(1958, 6, 4)
+        assert art5.versions[0].publication_date == date(1958, 6, 4)
 
     def test_article_content(self):
         blocks = _parse_legi_combined(COMBINED_XML_SIMPLE)
-        articles = [b for b in blocks if b.tipo == "article"]
-        art5 = [a for a in articles if "5" in a.titulo][0]
+        articles = [b for b in blocks if b.block_type == "article"]
+        art5 = [a for a in articles if "5" in a.title][0]
         paragraphs = art5.versions[0].paragraphs
         assert any("Article 5" in p.text for p in paragraphs)
         assert any("Président" in p.text for p in paragraphs)
 
     def test_repealed_section_has_empty_version(self):
         blocks = _parse_legi_combined(COMBINED_XML_ABROGATED_SECTION)
-        sections = [b for b in blocks if b.tipo == "section"]
+        sections = [b for b in blocks if b.block_type == "section"]
         assert len(sections) == 1
         sec = sections[0]
         assert len(sec.versions) == 2
         assert len(sec.versions[0].paragraphs) > 0
         assert len(sec.versions[1].paragraphs) == 0
-        assert sec.versions[1].fecha_publicacion == date(2010, 1, 1)
+        assert sec.versions[1].publication_date == date(2010, 1, 1)
 
     def test_repealed_article_has_empty_version(self):
         blocks = _parse_legi_combined(COMBINED_XML_ABROGATED_SECTION)
-        articles = [b for b in blocks if b.tipo == "article"]
+        articles = [b for b in blocks if b.block_type == "article"]
         assert len(articles) == 1
         art = articles[0]
         assert len(art.versions) == 2
@@ -340,7 +340,7 @@ class TestParseLEGICombined:
 
     def test_niv_css_mapping(self):
         blocks = _parse_legi_combined(COMBINED_XML_SIMPLE)
-        sections = [b for b in blocks if b.tipo == "section"]
+        sections = [b for b in blocks if b.block_type == "section"]
         for sec in sections:
             assert sec.versions[0].paragraphs[0].css_class == "titulo_tit"
 
@@ -364,36 +364,36 @@ class TestLEGIMetadataParser:
         parser = LEGIMetadataParser()
         meta = parser.parse(STRUCTURE_XML_CONSTITUTION, "LEGITEXT000006071194")
 
-        assert meta.identificador == "LEGITEXT000006071194"
-        assert meta.pais == "fr"
-        assert meta.rango == Rango.CONSTITUTION_FR
-        assert meta.titulo == "Constitution du 4 octobre 1958"
-        assert meta.titulo_corto == "Constitution"
-        assert meta.fecha_publicacion == date(1958, 10, 5)
-        assert meta.estado == EstadoNorma.VIGENTE
-        assert meta.fecha_ultima_modificacion == date(2024, 3, 1)
-        assert "legifrance" in meta.fuente
+        assert meta.identifier == "LEGITEXT000006071194"
+        assert meta.country == "fr"
+        assert meta.rank == Rank.CONSTITUTION_FR
+        assert meta.title == "Constitution du 4 octobre 1958"
+        assert meta.short_title == "Constitution"
+        assert meta.publication_date == date(1958, 10, 5)
+        assert meta.status == NormStatus.IN_FORCE
+        assert meta.last_modified == date(2024, 3, 1)
+        assert "legifrance" in meta.source
 
     def test_code_civil(self):
         """Code civil has DATE_PUBLI=2999-01-01, falls back to LIEN_TXT debut."""
         parser = LEGIMetadataParser()
         meta = parser.parse(STRUCTURE_XML_CODE_CIVIL, "LEGITEXT000006069414")
 
-        assert meta.identificador == "LEGITEXT000006069414"
-        assert meta.pais == "fr"
-        assert meta.rango == Rango.CODE
-        assert meta.titulo == "Code civil"
-        assert meta.titulo_corto == "Code civil"
+        assert meta.identifier == "LEGITEXT000006069414"
+        assert meta.country == "fr"
+        assert meta.rank == Rank.CODE
+        assert meta.title == "Code civil"
+        assert meta.short_title == "Code civil"
         # DATE_PUBLI is 2999-01-01 (sentinel) so falls back to LIEN_TXT debut
-        assert meta.fecha_publicacion == date(1804, 3, 21)
-        assert meta.estado == EstadoNorma.VIGENTE
+        assert meta.publication_date == date(1804, 3, 21)
+        assert meta.status == NormStatus.IN_FORCE
 
     def test_sentinel_2999_not_valid_date(self):
         """2999-01-01 as sentinel must not be parsed as a date."""
         parser = LEGIMetadataParser()
         meta = parser.parse(STRUCTURE_XML_CONSTITUTION, "LEGITEXT000006071194")
-        # fecha_ultima_modificacion comes from DERNIERE_MODIFICATION, not from sentinels
-        assert meta.fecha_ultima_modificacion == date(2024, 3, 1)
+        # last_modified comes from DERNIERE_MODIFICATION, not from sentinels
+        assert meta.last_modified == date(2024, 3, 1)
 
 
 # ─────────────────────────────────────────────
@@ -411,7 +411,7 @@ class TestLEGITextParser:
         parser = LEGITextParser()
         reforms = parser.extract_reforms(COMBINED_XML_SIMPLE)
         assert len(reforms) >= 2
-        dates = [r.fecha for r in reforms]
+        dates = [r.date for r in reforms]
         assert date(1958, 10, 5) in dates or date(1958, 6, 4) in dates
 
 
@@ -453,19 +453,19 @@ class TestCountriesDispatch:
 
 class TestSlugFR:
     def test_norm_to_filepath_uses_pais(self):
-        from legalize.models import EstadoNorma, NormaMetadata, Rango
+        from legalize.models import NormStatus, NormMetadata, Rank
         from legalize.transformer.slug import norm_to_filepath
 
-        meta = NormaMetadata(
-            titulo="Code civil",
-            titulo_corto="Code civil",
-            identificador="LEGITEXT000006069414",
-            pais="fr",
-            rango=Rango.CODE,
-            fecha_publicacion=date(1804, 3, 21),
-            estado=EstadoNorma.VIGENTE,
-            departamento="",
-            fuente="https://www.legifrance.gouv.fr/codes/texte_lc/LEGITEXT000006069414",
+        meta = NormMetadata(
+            title="Code civil",
+            short_title="Code civil",
+            identifier="LEGITEXT000006069414",
+            country="fr",
+            rank=Rank.CODE,
+            publication_date=date(1804, 3, 21),
+            status=NormStatus.IN_FORCE,
+            department="",
+            source="https://www.legifrance.gouv.fr/codes/texte_lc/LEGITEXT000006069414",
         )
         assert norm_to_filepath(meta) == "fr/LEGITEXT000006069414.md"
 

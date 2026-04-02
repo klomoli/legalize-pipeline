@@ -2,10 +2,10 @@
 
 The BOE API does not expose a directly filterable catalog endpoint.
 For bootstrap, we use two strategies:
-1. Fixed norms list (normas_fijas in config): always processed
+1. Fixed norms list (fixed_norms in config): always processed
 2. Summary sweep: iterate summaries by date to discover new norms
 
-For Phase 2, the bootstrap works primarily with normas_fijas.
+For Phase 2, the bootstrap works primarily with fixed_norms.
 Automatic discovery via summaries is used in the daily flow.
 """
 
@@ -15,8 +15,11 @@ import logging
 from collections.abc import Iterator
 from datetime import date, timedelta
 
+import requests
+
 from legalize.config import Config
 from legalize.fetcher.es.client import BOEClient
+from legalize.fetcher.es.config import ScopeConfig
 from legalize.fetcher.es.sumario import parse_summary
 
 logger = logging.getLogger(__name__)
@@ -28,7 +31,8 @@ def iter_fixed_norms(config: Config) -> Iterator[str]:
     Fixed norms are those always included in bootstrap,
     regardless of the scope dates.
     """
-    for boe_id in config.scope.normas_fijas:
+    cc = config.get_country("es")
+    for boe_id in cc.source.get("normas_fijas", []):
         yield boe_id
 
 
@@ -54,6 +58,11 @@ def iter_norms_from_summaries(
     Yields:
         BOE IDs of dispositions within scope.
     """
+    cc = config.get_country("es")
+    scope = ScopeConfig(
+        ranks=cc.source.get("rangos", []),
+        fixed_norms=cc.source.get("normas_fijas", []),
+    )
     seen: set[str] = set()
     current = start_date
 
@@ -65,14 +74,14 @@ def iter_norms_from_summaries(
 
         try:
             xml_data = client.get_sumario(current)
-            dispositions = parse_summary(xml_data, config.scope)
+            dispositions = parse_summary(xml_data, scope)
 
             for disp in dispositions:
                 if disp.id_boe not in seen:
                     seen.add(disp.id_boe)
                     yield disp.id_boe
 
-        except Exception:
+        except requests.RequestException:
             logger.warning("Error processing summary for %s, continuing", current, exc_info=True)
 
         current += timedelta(days=1)

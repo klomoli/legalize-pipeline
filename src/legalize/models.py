@@ -1,6 +1,6 @@
 """Legislative domain data model.
 
-Designed to be multi-country. Spain-specific concepts (Rango, BOE)
+Designed to be multi-country. Spain-specific concepts (Rank, BOE)
 are encapsulated but the core model is generic.
 """
 
@@ -13,15 +13,15 @@ from typing import Optional
 
 
 # ─────────────────────────────────────────────
-# Rango normativo — free-form string, extensible per country
+# Normative rank — free-form string, extensible per country
 # ─────────────────────────────────────────────
 
 
-class Rango(str):
+class Rank(str):
     """Normative rank of a legal provision.
 
     Free-form string — each country defines its own values.
-    transformer/slug.py maps each rango to its folder in the repo.
+    transformer/slug.py maps each rank to its folder in the repo.
 
     Spain: constitucion, ley_organica, ley, real_decreto_ley, ...
     France: code, loi, loi_organique, ordonnance, decret, constitution_fr, ...
@@ -29,7 +29,7 @@ class Rango(str):
     """
 
     # Predefined constants for autocompletion and consistency.
-    # Not restrictive — any string is valid as a Rango.
+    # Not restrictive — any string is valid as a Rank.
 
     # Spain
     CONSTITUCION = "constitucion"
@@ -61,20 +61,20 @@ class Rango(str):
 class CommitType(str, Enum):
     """Commit type in the legislative history (generic, multi-country)."""
 
-    NUEVA = "nueva"
-    REFORMA = "reforma"
-    DEROGACION = "derogacion"
-    CORRECCION = "correccion"
+    NEW = "nueva"
+    REFORM = "reforma"
+    REPEAL = "derogacion"
+    CORRECTION = "correccion"
     BOOTSTRAP = "bootstrap"
     FIX_PIPELINE = "fix-pipeline"
 
 
-class EstadoNorma(str, Enum):
+class NormStatus(str, Enum):
     """Validity status of a norm (generic, multi-country)."""
 
-    VIGENTE = "vigente"
-    DEROGADA = "derogada"
-    PARCIALMENTE_DEROGADA = "parcialmente_derogada"
+    IN_FORCE = "vigente"
+    REPEALED = "derogada"
+    PARTIALLY_REPEALED = "parcialmente_derogada"
 
 
 # ─────────────────────────────────────────────
@@ -94,19 +94,19 @@ class Paragraph:
 class Version:
     """A temporal version of a block, introduced by a legal provision."""
 
-    id_norma: str
-    fecha_publicacion: date
-    fecha_vigencia: date
+    norm_id: str
+    publication_date: date
+    effective_date: date
     paragraphs: tuple[Paragraph, ...]
 
 
 @dataclass(frozen=True)
-class Bloque:
+class Block:
     """Structural unit of a norm (article, title, chapter, etc.)."""
 
     id: str
-    tipo: str
-    titulo: str
+    block_type: str
+    title: str
     versions: tuple[Version, ...]
 
 
@@ -116,30 +116,30 @@ class Bloque:
 
 
 @dataclass(frozen=True)
-class NormaMetadata:
+class NormMetadata:
     """Complete metadata of a legislative norm.
 
     Generic fields applicable to any country:
-    - identificador: unique official ID (BOE-A-1978-31229 in Spain, JORF... in France)
-    - pais: ISO 3166-1 alpha-2 code
-    - rango: norm type/rank (country-specific enum)
-    - fuente: official URL of the norm
+    - identifier: unique official ID (BOE-A-1978-31229 in Spain, JORF... in France)
+    - country: ISO 3166-1 alpha-2 code
+    - rank: norm type/rank (country-specific enum)
+    - source: official URL of the norm
     """
 
-    titulo: str
-    titulo_corto: str
-    identificador: str  # Official ID: BOE-A-..., JORF-..., etc.
-    pais: str  # ISO 3166-1 alpha-2: "es", "fr", "de"
-    rango: Rango
-    fecha_publicacion: date
-    estado: EstadoNorma
-    departamento: str
-    fuente: str  # Official URL
-    jurisdiccion: Optional[str] = None  # ELI code: "es-pv", "es-ct", None=state-level
-    fecha_ultima_modificacion: Optional[date] = None
-    url_pdf: Optional[str] = None
-    materias: tuple[str, ...] = ()
-    notas: str = ""
+    title: str
+    short_title: str
+    identifier: str  # Official ID: BOE-A-..., JORF-..., etc.
+    country: str  # ISO 3166-1 alpha-2: "es", "fr", "de"
+    rank: Rank
+    publication_date: date
+    status: NormStatus
+    department: str
+    source: str  # Official URL
+    jurisdiction: Optional[str] = None  # ELI code: "es-pv", "es-ct", None=state-level
+    last_modified: Optional[date] = None
+    pdf_url: Optional[str] = None
+    subjects: tuple[str, ...] = ()
+    notes: str = ""
 
 
 # ─────────────────────────────────────────────
@@ -151,9 +151,9 @@ class NormaMetadata:
 class Reform:
     """A point in time where the norm changed."""
 
-    fecha: date
-    id_norma: str
-    bloques_afectados: tuple[str, ...]
+    date: date
+    norm_id: str
+    affected_blocks: tuple[str, ...]
 
 
 # ─────────────────────────────────────────────
@@ -162,11 +162,11 @@ class Reform:
 
 
 @dataclass(frozen=True)
-class NormaCompleta:
+class ParsedNorm:
     """Fully parsed norm: metadata + structure + timeline."""
 
-    metadata: NormaMetadata
-    bloques: tuple[Bloque, ...]
+    metadata: NormMetadata
+    blocks: tuple[Block, ...]
     reforms: tuple[Reform, ...]
 
 
@@ -195,10 +195,10 @@ class Disposition:
     """An individual disposition from a daily BOE summary."""
 
     id_boe: str
-    titulo: str
-    rango: Optional[Rango]
-    departamento: str
+    title: str
+    rank: Optional[Rank]
+    department: str
     url_xml: str
-    normas_afectadas: tuple[str, ...]
-    es_nueva: bool = False
-    es_correccion: bool = False
+    affected_norms: tuple[str, ...]
+    is_new: bool = False
+    is_correction: bool = False
