@@ -310,6 +310,7 @@ def bootstrap(
 @click.option("--date", "target_date", default=None, help="Date to process (YYYY-MM-DD).")
 @click.option("--repo-path", default=None, help="Override output repo directory.")
 @click.option("--data-dir", default=None, help="Override data directory.")
+@click.option("--legi-dir", default=None, help="France only: path to LEGI dump directory.")
 @click.option("--push", is_flag=True, help="Push to remote after commits.")
 @click.option("--dry-run", is_flag=True, help="Simulate without creating commits.")
 @click.pass_context
@@ -319,6 +320,7 @@ def daily(
     target_date: str | None,
     repo_path: str | None,
     data_dir: str | None,
+    legi_dir: str | None,
     push: bool,
     dry_run: bool,
 ) -> None:
@@ -327,10 +329,8 @@ def daily(
     Examples:
         legalize daily                              # Spain, today
         legalize daily -c es --date 2026-03-28      # Spain, specific date
-        legalize daily -c se                        # Sweden, today
+        legalize daily -c fr --date 2026-04-01      # France, specific date
     """
-    from legalize.fetcher.es.daily import daily as run_daily
-
     config = ctx.obj["config"]
     if repo_path:
         cc = config.get_country(country)
@@ -338,15 +338,24 @@ def daily(
     if data_dir:
         cc = config.get_country(country)
         cc.data_dir = data_dir
+    if legi_dir:
+        cc = config.get_country(country)
+        cc.source["legi_dir"] = legi_dir
     if push:
         config.git.push = True
 
-    if country != "es":
-        console.print(f"[yellow]Daily for '{country}' not yet implemented. Coming in PR4.[/yellow]")
-        return
-
     parsed_date = date.fromisoformat(target_date) if target_date else None
-    run_daily(config, target_date=parsed_date, dry_run=dry_run)
+
+    if country == "es":
+        from legalize.fetcher.es.daily import daily as run_daily
+
+        run_daily(config, target_date=parsed_date, dry_run=dry_run)
+    elif country == "fr":
+        from legalize.fetcher.fr.daily import daily as run_daily_fr
+
+        run_daily_fr(config, target_date=parsed_date, dry_run=dry_run)
+    else:
+        console.print(f"[yellow]Daily for '{country}' not yet implemented.[/yellow]")
 
 
 # ─────────────────────────────────────────────
