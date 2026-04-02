@@ -58,10 +58,6 @@ class Rank(str):
     OTRO = "otro"
 
 
-# Legacy alias — will be removed in a future release
-Rango = Rank
-
-
 class CommitType(str, Enum):
     """Commit type in the legislative history (generic, multi-country)."""
 
@@ -79,10 +75,6 @@ class NormStatus(str, Enum):
     IN_FORCE = "vigente"
     REPEALED = "derogada"
     PARTIALLY_REPEALED = "parcialmente_derogada"
-
-
-# Legacy alias — will be removed in a future release
-EstadoNorma = NormStatus
 
 
 # ─────────────────────────────────────────────
@@ -118,10 +110,6 @@ class Block:
     versions: tuple[Version, ...]
 
 
-# Legacy alias — will be removed in a future release
-Bloque = Block
-
-
 # ─────────────────────────────────────────────
 # Norm metadata (generic, multi-country)
 # ─────────────────────────────────────────────
@@ -154,10 +142,6 @@ class NormMetadata:
     notes: str = ""
 
 
-# Legacy alias — will be removed in a future release
-NormaMetadata = NormMetadata
-
-
 # ─────────────────────────────────────────────
 # Reform timeline
 # ─────────────────────────────────────────────
@@ -184,10 +168,6 @@ class ParsedNorm:
     metadata: NormMetadata
     blocks: tuple[Block, ...]
     reforms: tuple[Reform, ...]
-
-
-# Legacy alias — will be removed in a future release
-NormaCompleta = ParsedNorm
 
 
 @dataclass(frozen=True)
