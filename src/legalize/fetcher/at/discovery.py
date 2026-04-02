@@ -50,7 +50,12 @@ class RISDiscovery(NormDiscovery):
     def discover_daily(
         self, client: LegislativeClient, target_date: date, **kwargs
     ) -> Iterator[str]:
-        """Yield Gesetzesnummern updated on target_date via the Geaendert filter."""
+        """Yield Gesetzesnummern updated on target_date.
+
+        The RIS API ignores the Geaendert query parameter, so we use
+        ImRisSeit=EinerWoche to get recent changes and filter client-side
+        by the Allgemein.Geaendert field matching the target date.
+        """
         assert isinstance(client, RISClient)
         seen: set[str] = set()
         date_str = target_date.strftime("%Y-%m-%d")
@@ -58,16 +63,21 @@ class RISDiscovery(NormDiscovery):
         page_size = 100
 
         while True:
-            raw = client.get_page(page=page, page_size=page_size, Geaendert=date_str)
+            raw = client.get_page(page=page, page_size=page_size, ImRisSeit="EinerWoche")
             data = json.loads(raw)
-            results = data["OgdSearchResult"]["OgdDocumentResults"]
-            total = int(results["Hits"]["#text"])
+            results = data["OgdSearchResult"].get("OgdDocumentResults")
+            if not results:
+                break
 
+            total = int(results["Hits"]["#text"])
             refs = results.get("OgdDocumentReference", [])
             if isinstance(refs, dict):
                 refs = [refs]
 
             for ref in refs:
+                geaendert = ref["Data"]["Metadaten"].get("Allgemein", {}).get("Geaendert", "")
+                if geaendert != date_str:
+                    continue
                 br = ref["Data"]["Metadaten"]["Bundesrecht"]["BrKons"]
                 gesnr = br.get("Gesetzesnummer", "")
                 if gesnr and gesnr not in seen:

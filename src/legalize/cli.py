@@ -329,8 +329,6 @@ def daily(
         legalize daily -c es --date 2026-03-28      # Spain, specific date
         legalize daily -c se                        # Sweden, today
     """
-    from legalize.fetcher.es.daily import daily as run_daily
-
     config = ctx.obj["config"]
     if repo_path:
         cc = config.get_country(country)
@@ -341,11 +339,15 @@ def daily(
     if push:
         config.git.push = True
 
-    if country != "es":
-        console.print(f"[yellow]Daily for '{country}' not yet implemented. Coming in PR4.[/yellow]")
+    parsed_date = date.fromisoformat(target_date) if target_date else None
+
+    try:
+        module = __import__(f"legalize.fetcher.{country}.daily", fromlist=["daily"])
+        run_daily = module.daily
+    except (ImportError, AttributeError):
+        console.print(f"[yellow]Daily for '{country}' not yet implemented.[/yellow]")
         return
 
-    parsed_date = date.fromisoformat(target_date) if target_date else None
     run_daily(config, target_date=parsed_date, dry_run=dry_run)
 
 
