@@ -48,6 +48,18 @@ REGISTRY: dict[str, dict[str, tuple[str, str]]] = {
         "text_parser": ("legalize.fetcher.at.parser", "RISTextParser"),
         "metadata_parser": ("legalize.fetcher.at.parser", "RISMetadataParser"),
     },
+    "de": {
+        "client": ("legalize.fetcher.de.client", "NeuRISClient"),
+        "discovery": ("legalize.fetcher.de.discovery", "NeuRISDiscovery"),
+        "text_parser": ("legalize.fetcher.de.parser", "NeuRISTextParser"),
+        "metadata_parser": ("legalize.fetcher.de.parser", "NeuRISMetadataParser"),
+    },
+    "cl": {
+        "client": ("legalize.fetcher.cl.client", "BCNClient"),
+        "discovery": ("legalize.fetcher.cl.discovery", "BCNDiscovery"),
+        "text_parser": ("legalize.fetcher.cl.parser", "CLTextParser"),
+        "metadata_parser": ("legalize.fetcher.cl.parser", "CLMetadataParser"),
+    },
     "lt": {
         "client": ("legalize.fetcher.lt.client", "TARClient"),
         "discovery": ("legalize.fetcher.lt.discovery", "TARDiscovery"),
@@ -59,6 +71,12 @@ REGISTRY: dict[str, dict[str, tuple[str, str]]] = {
         "discovery": ("legalize.fetcher.pt.discovery", "DREDiscovery"),
         "text_parser": ("legalize.fetcher.pt.parser", "DRETextParser"),
         "metadata_parser": ("legalize.fetcher.pt.parser", "DREMetadataParser"),
+    },
+    "uy": {
+        "client": ("legalize.fetcher.uy.client", "IMPOClient"),
+        "discovery": ("legalize.fetcher.uy.discovery", "IMPODiscovery"),
+        "text_parser": ("legalize.fetcher.uy.parser", "IMPOTextParser"),
+        "metadata_parser": ("legalize.fetcher.uy.parser", "IMPOMetadataParser"),
     },
     # To add a new country:
     # 1. Create fetcher/{code}/ with client.py, discovery.py, parser.py

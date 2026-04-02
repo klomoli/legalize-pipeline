@@ -42,6 +42,37 @@ countries:
     max_workers: 1
     source: {}  # RIS OGD API, no config needed
 
+  de:
+    repo_path: "../countries/de"
+    data_dir: "../countries/data-de"
+    cache_dir: ".cache"
+    max_workers: 1
+    source:
+      base_url: "https://testphase.rechtsinformationen.bund.de/v1"
+      request_timeout: 30
+      max_retries: 5
+      requests_per_second: 2.0
+
+  cl:
+    repo_path: "../countries/cl"
+    data_dir: "../countries/data-cl"
+    max_workers: 1
+    source:
+      base_url: "https://www.leychile.cl"
+      search_url: "https://nuevo.leychile.cl/servicios/Consulta/script/exportarBSimpleMetas"
+      request_timeout: 30
+      max_retries: 3
+      requests_per_second: 1.0
+      ranks:
+        - "Ley"
+        - "Decreto con Fuerza de Ley"
+        - "Decreto Ley"
+        - "Decreto Supremo"
+        - "Tratado Internacional"
+        - "Ley Orgánica Constitucional"
+        - "Ley de Quórum Calificado"
+        - "Decreto"
+
   lt:
     repo_path: "../countries/lt"
     data_dir: "../countries/data-lt"
@@ -62,3 +93,18 @@ countries:
       # Download SQLite dump from https://dre.tretas.org/about/
       # Decompress: bunzip2 dre_tretas.db.bz2
       db_path: ""  # e.g.: "../countries/data-pt/dre_tretas.db"
+
+  uy:
+    repo_path: "../countries/uy"
+    data_dir: "../countries/data-uy"
+    max_workers: 1
+    source:
+      base_url: "https://www.impo.com.uy"
+      requests_per_second: 1.0
+      request_timeout: 30
+      max_retries: 3
+      collections:
+        - "leyes"
+        - "decretos-ley"
+        - "constitucion"
+      law_number_max: 20500
