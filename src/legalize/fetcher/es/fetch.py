@@ -77,15 +77,15 @@ def fetch_one(config: Config, boe_id: str, force: bool = False) -> ParsedNorm | 
 
 
 def fetch_all(config: Config, force: bool = False) -> list[str]:
-    """Download all norms from config.normas_fijas.
+    """Download all norms from config fixed_norms list.
 
     Returns list of successfully downloaded BOE-IDs.
     """
     cc = config.get_country("es")
-    normas_fijas = cc.source.get("normas_fijas", [])
+    fixed_norms = cc.source.get("normas_fijas", [])
     console.print("[bold]Fetch — downloading norms from BOE[/bold]\n")
     fetched = []
-    for boe_id in normas_fijas:
+    for boe_id in fixed_norms:
         norm = fetch_one(config, boe_id, force=force)
         if norm is not None:
             fetched.append(boe_id)
@@ -97,7 +97,7 @@ def fetch_catalog(config: Config, force: bool = False) -> list[str]:
     """Download ALL state-level norms from the BOE catalog.
 
     Paginates correctly (the API has a 10,000 per request limit).
-    Downloads all state-level norms, regardless of rango.
+    Downloads all state-level norms, regardless of rank.
     Skips those already in data/.
     """
     import requests

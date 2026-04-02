@@ -25,7 +25,7 @@ Official data source
 fetcher/{code}/          <-- you implement this
   client.py              LegislativeClient: fetch raw data
   discovery.py           NormDiscovery: find all laws
-  parser.py              TextParser + MetadataParser: parse into Bloque/NormaMetadata
+  parser.py              TextParser + MetadataParser: parse into Block/NormMetadata
   |
   v
 Generic pipeline         <-- provided for free
@@ -83,14 +83,14 @@ class MyClient(LegislativeClient):
         )
         self._base_url = base_url
 
-    def get_texto(self, norm_id: str) -> bytes:
+    def get_text(self, norm_id: str) -> bytes:
         """Fetch the consolidated text of a law. Returns raw bytes."""
         resp = self._session.get(f"{self._base_url}/text/{norm_id}")
         resp.raise_for_status()
         return resp.content
 
-    def get_metadatos(self, norm_id: str) -> bytes:
-        """Fetch metadata. Can return same data as get_texto if metadata is embedded."""
+    def get_metadata(self, norm_id: str) -> bytes:
+        """Fetch metadata. Can return same data as get_text if metadata is embedded."""
         resp = self._session.get(f"{self._base_url}/metadata/{norm_id}")
         resp.raise_for_status()
         return resp.content
@@ -149,27 +149,26 @@ Parses raw bytes into the generic data model:
 ```python
 from typing import Any
 from legalize.fetcher.base import MetadataParser, TextParser
-from legalize.models import Bloque, EstadoNorma, NormaMetadata, Paragraph, Rango, Version
+from legalize.models import Block, NormStatus, NormMetadata, Paragraph, Rank, Version
 
 class MyTextParser(TextParser):
 
-    def parse_texto(self, data: bytes) -> list[Any]:
-        """Parse raw text into Bloque objects.
+    def parse_text(self, data: bytes) -> list[Any]:
+        """Parse raw text into Block objects.
 
-        Each structural unit (chapter, section, article) becomes a Bloque.
-        Each Bloque has one or more Versions with paragraphs.
+        Each structural unit (chapter, section, article) becomes a Block.
+        Each Block has one or more Versions with paragraphs.
         """
-        # Parse your format (XML, JSON, HTML) into:
         return [
-            Bloque(
+            Block(
                 id="art-1",
-                tipo="article",
-                titulo="Article 1",
+                block_type="article",
+                title="Article 1",
                 versions=(
                     Version(
-                        id_norma="LAW-2024-1",
-                        fecha_publicacion=date(2024, 1, 15),
-                        fecha_vigencia=date(2024, 1, 15),
+                        norm_id="LAW-2024-1",
+                        publication_date=date(2024, 1, 15),
+                        effective_date=date(2024, 1, 15),
                         paragraphs=(
                             Paragraph(css_class="articulo", text="Article 1"),
                             Paragraph(css_class="parrafo", text="Everyone has the right to..."),
@@ -181,39 +180,38 @@ class MyTextParser(TextParser):
 
     def extract_reforms(self, data: bytes) -> list[Any]:
         """Extract reform timeline from the text data."""
-        blocks = self.parse_texto(data)
+        blocks = self.parse_text(data)
         from legalize.transformer.xml_parser import extract_reforms
         return extract_reforms(blocks)
 
 
 class MyMetadataParser(MetadataParser):
 
-    def parse(self, data: bytes, norm_id: str) -> NormaMetadata:
-        """Parse raw metadata into NormaMetadata."""
-        # Parse your format, then return:
-        return NormaMetadata(
-            titulo="Full Title of the Law",
-            titulo_corto="Short Title",
-            identificador=norm_id,     # must be filesystem-safe
-            pais="xx",                 # ISO 3166-1 alpha-2
-            rango=Rango("act"),        # free-form string
-            fecha_publicacion=date(2024, 1, 15),
-            estado=EstadoNorma.VIGENTE,
-            departamento="Ministry of Justice",
-            fuente="https://official-source.gov/law/123",
+    def parse(self, data: bytes, norm_id: str) -> NormMetadata:
+        """Parse raw metadata into NormMetadata."""
+        return NormMetadata(
+            title="Full Title of the Law",
+            short_title="Short Title",
+            identifier=norm_id,        # must be filesystem-safe
+            country="xx",              # ISO 3166-1 alpha-2
+            rank=Rank("act"),          # free-form string
+            publication_date=date(2024, 1, 15),
+            status=NormStatus.IN_FORCE,
+            department="Ministry of Justice",
+            source="https://official-source.gov/law/123",
         )
 ```
 
 **Key rules for the output models:**
 
-- `Bloque` -- structural unit (article, chapter, section) with versioned content
-- `Version` -- a temporal version with `fecha_publicacion` and `paragraphs`
+- `Block` -- structural unit (article, chapter, section) with versioned content
+- `Version` -- a temporal version with `publication_date` and `paragraphs`
 - `Paragraph` -- text + `css_class` (controls markdown rendering: `"articulo"` for article headings, `"parrafo"` for body text, `"titulo_tit"` for title headings, `"capitulo_tit"` for chapter headings)
-- `NormaMetadata` -- title, id, country, rango, dates, status
-- `identificador` must be filesystem-safe: no `:`, no spaces, no `/\*?"<>|`. Use `-` as separator. Example: SFS `1962:700` becomes `SFS-1962-700`
-- `pais` must be the ISO 3166-1 alpha-2 code (e.g., `"se"`, `"fr"`, `"es"`)
-- `rango` is a free-form string (`Rango("act")`, `Rango("code")`, `Rango("lag")`). Goes in YAML frontmatter, not in the file path
-- You can reuse `extract_reforms()` from `transformer/xml_parser.py` -- it works with any list of Bloques
+- `NormMetadata` -- title, id, country, rank, dates, status
+- `identifier` must be filesystem-safe: no `:`, no spaces, no `/\*?"<>|`. Use `-` as separator. Example: SFS `1962:700` becomes `SFS-1962-700`
+- `country` must be the ISO 3166-1 alpha-2 code (e.g., `"se"`, `"fr"`, `"es"`)
+- `rank` is a free-form string (`Rank("act")`, `Rank("code")`, `Rank("lag")`). Goes in YAML frontmatter, not in the file path
+- You can reuse `extract_reforms()` from `transformer/xml_parser.py` -- it works with any list of Blocks
 
 **Reference:** `fetcher/fr/parser.py` (XML), `fetcher/es/parser.py` (XML)
 
@@ -273,7 +271,7 @@ git -C ../countries/xx remote add origin git@github.com:legalize-dev/legalize-{c
 git -C ../countries/xx push -u origin main
 ```
 
-Output structure is flat -- all laws in `{country_dir}/`, rango goes in YAML frontmatter:
+Output structure is flat -- all laws in `{country_dir}/`, rank goes in YAML frontmatter:
 
 ```
 legalize-{code}/
@@ -284,7 +282,7 @@ legalize-{code}/
   LICENSE         # MIT
 ```
 
-The `norma_to_filepath()` function generates `{pais}/{identificador}.md` automatically.
+The `norm_to_filepath()` function generates `{country}/{identifier}.md` automatically.
 
 ## Step 5: Write tests
 
@@ -298,10 +296,10 @@ from legalize.countries import get_text_parser, get_metadata_parser
 # Save sample data from your source in tests/fixtures/
 
 class TestParser:
-    def test_parse_texto(self):
+    def test_parse_text(self):
         data = Path("tests/fixtures/sample_{code}.xml").read_bytes()
         parser = MyTextParser()
-        blocks = parser.parse_texto(data)
+        blocks = parser.parse_text(data)
         assert len(blocks) > 0
         assert blocks[0].versions  # has at least one version
 
@@ -309,14 +307,14 @@ class TestParser:
         data = Path("tests/fixtures/sample_{code}_meta.xml").read_bytes()
         parser = MyMetadataParser()
         meta = parser.parse(data, "NORM-ID-123")
-        assert meta.pais == "xx"
-        assert meta.identificador == "NORM-ID-123"
+        assert meta.country == "xx"
+        assert meta.identifier == "NORM-ID-123"
 
     def test_filesystem_safe_id(self):
         # Ensure no colons, spaces, or special chars
         meta = ...
-        assert ":" not in meta.identificador
-        assert " " not in meta.identificador
+        assert ":" not in meta.identifier
+        assert " " not in meta.identifier
 
 class TestCountryDispatch:
     def test_registry(self):
@@ -366,17 +364,17 @@ Choose the strategy that matches your data source. The pipeline supports all of 
 
 ## Subnational jurisdictions
 
-If a country has subnational legislation (e.g., Spain's Comunidades Autonomas, Germany's Bundeslaender), use the `jurisdiccion` field in `NormaMetadata`.
+If a country has subnational legislation (e.g., Spain's autonomous communities, Germany's Bundesländer), use the `jurisdiction` field in `NormMetadata`.
 
 We follow the [ELI (European Legislation Identifier)](https://eur-lex.europa.eu/eli-register/what_is_eli.html) standard: `{country}` for national, `{country}-{region}` for subnational.
 
 ```
 legalize-es/
   es/              # national
-  es-pv/           # Pais Vasco
+  es-pv/           # País Vasco
   es-ct/           # Catalunya
 ```
 
-The `norma_to_filepath()` function handles this automatically based on `metadata.jurisdiccion`.
+The `norm_to_filepath()` function handles this automatically based on `metadata.jurisdiction`.
 
 All subnational laws live in the same repo as national laws.

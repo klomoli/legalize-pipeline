@@ -2,10 +2,10 @@
 
 The BOE API does not expose a directly filterable catalog endpoint.
 For bootstrap, we use two strategies:
-1. Fixed norms list (normas_fijas in config): always processed
+1. Fixed norms list (fixed_norms in config): always processed
 2. Summary sweep: iterate summaries by date to discover new norms
 
-For Phase 2, the bootstrap works primarily with normas_fijas.
+For Phase 2, the bootstrap works primarily with fixed_norms.
 Automatic discovery via summaries is used in the daily flow.
 """
 
