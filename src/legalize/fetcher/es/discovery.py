@@ -44,4 +44,4 @@ class BOEDiscovery(NormDiscovery):
         xml_data = client.get_sumario(target_date)
         dispositions = parse_summary(xml_data, scope)
         for disp in dispositions:
-            yield disp.id_norma
+            yield disp.id_boe

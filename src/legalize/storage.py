@@ -15,12 +15,12 @@ from datetime import date
 from pathlib import Path
 
 from legalize.models import (
-    Bloque,
-    EstadoNorma,
-    NormaCompleta,
-    NormaMetadata,
+    Block,
+    NormMetadata,
+    NormStatus,
     Paragraph,
-    Rango,
+    ParsedNorm,
+    Rank,
     Reform,
     Version,
 )
@@ -28,7 +28,7 @@ from legalize.models import (
 logger = logging.getLogger(__name__)
 
 
-def save_structured_json(data_dir: str | Path, norm: NormaCompleta) -> Path:
+def save_structured_json(data_dir: str | Path, norm: ParsedNorm) -> Path:
     """Save structured data as DB-ready JSON.
 
     JSON structure:
@@ -61,8 +61,8 @@ def save_structured_json(data_dir: str | Path, norm: NormaCompleta) -> Path:
         ]
     }
     """
-    data = _norma_to_dict(norm)
-    path = Path(data_dir) / "json" / f"{norm.metadata.identificador}.json"
+    data = _norm_to_dict(norm)
+    path = Path(data_dir) / "json" / f"{norm.metadata.identifier}.json"
     path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(path, "w", encoding="utf-8") as f:
@@ -72,42 +72,42 @@ def save_structured_json(data_dir: str | Path, norm: NormaCompleta) -> Path:
     return path
 
 
-def _norma_to_dict(norm: NormaCompleta) -> dict:
-    """Convert a NormaCompleta to a serializable dict."""
+def _norm_to_dict(norm: ParsedNorm) -> dict:
+    """Convert a ParsedNorm to a serializable dict."""
     meta = norm.metadata
 
     # Metadata
     metadata_dict = {
-        "titulo": meta.titulo.rstrip(". "),
-        "titulo_corto": meta.titulo_corto,
-        "identificador": meta.identificador,
-        "pais": meta.pais,
-        "rango": str(meta.rango),
-        "fecha_publicacion": meta.fecha_publicacion.isoformat(),
+        "titulo": meta.title.rstrip(". "),
+        "titulo_corto": meta.short_title,
+        "identificador": meta.identifier,
+        "pais": meta.country,
+        "rango": str(meta.rank),
+        "fecha_publicacion": meta.publication_date.isoformat(),
         "ultima_actualizacion": (
-            meta.fecha_ultima_modificacion.isoformat()
-            if meta.fecha_ultima_modificacion
-            else meta.fecha_publicacion.isoformat()
+            meta.last_modified.isoformat()
+            if meta.last_modified
+            else meta.publication_date.isoformat()
         ),
-        "estado": meta.estado.value,
-        "departamento": meta.departamento,
-        "fuente": meta.fuente,
+        "estado": meta.status.value,
+        "departamento": meta.department,
+        "fuente": meta.source,
     }
 
-    if meta.jurisdiccion:
-        metadata_dict["jurisdiccion"] = meta.jurisdiccion
-    if meta.url_pdf:
-        metadata_dict["url_pdf"] = meta.url_pdf
-    if meta.materias:
-        metadata_dict["materias"] = list(meta.materias)
+    if meta.jurisdiction:
+        metadata_dict["jurisdiccion"] = meta.jurisdiction
+    if meta.pdf_url:
+        metadata_dict["url_pdf"] = meta.pdf_url
+    if meta.subjects:
+        metadata_dict["materias"] = list(meta.subjects)
 
     # Articles with all their versions
     articles = []
-    for i, block in enumerate(norm.bloques):
+    for i, block in enumerate(norm.blocks):
         article = {
             "block_id": block.id,
-            "block_type": block.tipo,
-            "title": block.titulo,
+            "block_type": block.block_type,
+            "title": block.title,
             "position": i,
             "versions": [],
         }
@@ -115,8 +115,8 @@ def _norma_to_dict(norm: NormaCompleta) -> dict:
         for version in block.versions:
             text = "\n\n".join(p.text for p in version.paragraphs)
             version_dict: dict = {
-                "date": version.fecha_publicacion.isoformat(),
-                "source_id": version.id_norma,
+                "date": version.publication_date.isoformat(),
+                "source_id": version.norm_id,
                 "text": text,
             }
             # Preserve CSS classes for lossless round-trip
@@ -127,7 +127,7 @@ def _norma_to_dict(norm: NormaCompleta) -> dict:
 
         # current_text = latest version
         if block.versions:
-            last = max(block.versions, key=lambda v: v.fecha_publicacion)
+            last = max(block.versions, key=lambda v: v.publication_date)
             article["current_text"] = "\n\n".join(p.text for p in last.paragraphs)
         else:
             article["current_text"] = ""
@@ -135,19 +135,19 @@ def _norma_to_dict(norm: NormaCompleta) -> dict:
         articles.append(article)
 
     # Reforms
-    block_map = {b.id: b for b in norm.bloques}
+    block_map = {b.id: b for b in norm.blocks}
     reforms = []
     for reform in norm.reforms:
         affected = []
-        for bid in reform.bloques_afectados:
+        for bid in reform.affected_blocks:
             b = block_map.get(bid)
-            if b and b.titulo:
-                affected.append(b.titulo)
+            if b and b.title:
+                affected.append(b.title)
 
         reforms.append(
             {
-                "date": reform.fecha.isoformat(),
-                "source_id": reform.id_norma,
+                "date": reform.date.isoformat(),
+                "source_id": reform.norm_id,
                 "articles_affected": affected,
             }
         )
@@ -159,8 +159,8 @@ def _norma_to_dict(norm: NormaCompleta) -> dict:
     }
 
 
-def load_norma_from_json(json_path: Path) -> NormaCompleta:
-    """Load a NormaCompleta from a structured JSON file.
+def load_norma_from_json(json_path: Path) -> ParsedNorm:
+    """Load a ParsedNorm from a structured JSON file.
 
     Inverse of save_structured_json(). Falls back to "parrafo" css_class
     when not present in JSON (most norms use only parrafo).
@@ -170,18 +170,18 @@ def load_norma_from_json(json_path: Path) -> NormaCompleta:
         data = json.load(f)
 
     meta = data["metadata"]
-    metadata = NormaMetadata(
-        titulo=meta["titulo"],
-        titulo_corto=meta["titulo_corto"],
-        identificador=meta["identificador"],
-        pais=meta["pais"],
-        rango=Rango(meta["rango"]),
-        fecha_publicacion=date.fromisoformat(meta["fecha_publicacion"]),
-        estado=EstadoNorma(meta["estado"]),
-        departamento=meta["departamento"],
-        fuente=meta["fuente"],
-        jurisdiccion=meta.get("jurisdiccion"),
-        fecha_ultima_modificacion=date.fromisoformat(meta["ultima_actualizacion"]),
+    metadata = NormMetadata(
+        title=meta["titulo"],
+        short_title=meta["titulo_corto"],
+        identifier=meta["identificador"],
+        country=meta["pais"],
+        rank=Rank(meta["rango"]),
+        publication_date=date.fromisoformat(meta["fecha_publicacion"]),
+        status=NormStatus(meta["estado"]),
+        department=meta["departamento"],
+        source=meta["fuente"],
+        jurisdiction=meta.get("jurisdiccion"),
+        last_modified=date.fromisoformat(meta["ultima_actualizacion"]),
     )
 
     blocks = []
@@ -197,17 +197,17 @@ def load_norma_from_json(json_path: Path) -> NormaCompleta:
                     paragraphs.append(Paragraph(css_class=css, text=line))
             versions.append(
                 Version(
-                    id_norma=v["source_id"],
-                    fecha_publicacion=date.fromisoformat(v["date"]),
-                    fecha_vigencia=date.fromisoformat(v["date"]),
+                    norm_id=v["source_id"],
+                    publication_date=date.fromisoformat(v["date"]),
+                    effective_date=date.fromisoformat(v["date"]),
                     paragraphs=tuple(paragraphs),
                 )
             )
         blocks.append(
-            Bloque(
+            Block(
                 id=art["block_id"],
-                tipo=art["block_type"],
-                titulo=art["title"],
+                block_type=art["block_type"],
+                title=art["title"],
                 versions=tuple(versions),
             )
         )
@@ -216,9 +216,9 @@ def load_norma_from_json(json_path: Path) -> NormaCompleta:
     for r in data["reforms"]:
         reforms.append(
             Reform(
-                fecha=date.fromisoformat(r["date"]),
-                id_norma=r["source_id"],
-                bloques_afectados=tuple(
+                date=date.fromisoformat(r["date"]),
+                norm_id=r["source_id"],
+                affected_blocks=tuple(
                     art["block_id"]
                     for art in data["articles"]
                     for v in art["versions"]
@@ -227,14 +227,14 @@ def load_norma_from_json(json_path: Path) -> NormaCompleta:
             )
         )
 
-    result = NormaCompleta(
+    result = ParsedNorm(
         metadata=metadata,
-        bloques=tuple(blocks),
+        blocks=tuple(blocks),
         reforms=tuple(reforms),
     )
     logger.debug(
         "Loaded %s: %d blocks, %d reforms",
-        metadata.identificador,
+        metadata.identifier,
         len(blocks),
         len(reforms),
     )

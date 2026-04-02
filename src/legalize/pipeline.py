@@ -25,8 +25,8 @@ from legalize.committer.message import build_commit_info
 from legalize.config import Config
 from legalize.models import (
     CommitType,
-    NormaCompleta,
-    NormaMetadata,
+    NormMetadata,
+    ParsedNorm,
 )
 from legalize.state.store import StateStore
 from legalize.storage import load_norma_from_json, save_structured_json
@@ -48,7 +48,7 @@ def generic_fetch_one(
     country: str,
     norm_id: str,
     force: bool = False,
-) -> NormaCompleta | None:
+) -> ParsedNorm | None:
     """Fetch one norm for any country using countries.py dispatch.
 
     Uses the country's client, text_parser, and metadata_parser.
@@ -79,16 +79,16 @@ def generic_fetch_one(
             blocks = text_parser.parse_text(text_data)
             reforms = _extract_reforms_generic(text_parser, client, norm_id, blocks)
 
-            norm = NormaCompleta(
+            norm = ParsedNorm(
                 metadata=metadata,
-                bloques=tuple(blocks),
+                blocks=tuple(blocks),
                 reforms=tuple(reforms),
             )
 
             save_structured_json(cc.data_dir, norm)
 
             console.print(
-                f"  [green]✓[/green] {metadata.titulo_corto}: "
+                f"  [green]✓[/green] {metadata.short_title}: "
                 f"{len(blocks)} blocks, {len(reforms)} versions"
             )
             return norm
@@ -213,19 +213,19 @@ def commit_one(config: Config, country: str, norm_id: str, dry_run: bool = False
 
     norm = load_norma_from_json(json_path)
     metadata = norm.metadata
-    blocks = norm.bloques
+    blocks = norm.blocks
     reforms = norm.reforms
 
     logger.info("Committing %s: %d reforms", norm_id, len(reforms))
     console.print(
-        f"  [bold]{metadata.titulo_corto}[/bold]: {len(blocks)} blocks, {len(reforms)} versions"
+        f"  [bold]{metadata.short_title}[/bold]: {len(blocks)} blocks, {len(reforms)} versions"
     )
 
     if dry_run:
         for reform in reforms:
             is_first = reform == reforms[0]
             label = "bootstrap" if is_first else "reforma"
-            console.print(f"    [dim]{reform.fecha} [{label}][/dim]")
+            console.print(f"    [dim]{reform.date} [{label}][/dim]")
         return 0
 
     repo = GitRepo(cc.repo_path, config.git.committer_name, config.git.committer_email)
@@ -236,13 +236,13 @@ def commit_one(config: Config, country: str, norm_id: str, dry_run: bool = False
 
     for reform in reforms:
         # Idempotency check: Source-Id + Norm-Id (a single Source-Id can be both its own norm AND a reform of another)
-        if repo.has_commit_with_source_id(reform.id_norma, metadata.identificador):
+        if repo.has_commit_with_source_id(reform.norm_id, metadata.identifier):
             continue
 
         is_first = reform == reforms[0]
-        commit_type = CommitType.BOOTSTRAP if is_first else CommitType.REFORMA
+        commit_type = CommitType.BOOTSTRAP if is_first else CommitType.REFORM
 
-        markdown = render_norm_at_date(metadata, blocks, reform.fecha, include_all=is_first)
+        markdown = render_norm_at_date(metadata, blocks, reform.date, include_all=is_first)
         changed = repo.write_and_add(file_path, markdown)
 
         if not changed and not is_first:
@@ -253,7 +253,7 @@ def commit_one(config: Config, country: str, norm_id: str, dry_run: bool = False
 
         if sha:
             commits_created += 1
-            console.print(f"    [green]✓[/green] {reform.fecha} — {info.subject}")
+            console.print(f"    [green]✓[/green] {reform.date} — {info.subject}")
 
     return commits_created
 
@@ -357,7 +357,7 @@ def reprocess(
 
 def bootstrap_from_local_xml(
     config: Config,
-    metadata: NormaMetadata,
+    metadata: NormMetadata,
     xml_path: str | Path,
     country: str = "es",
     dry_run: bool = False,
@@ -368,12 +368,12 @@ def bootstrap_from_local_xml(
     blocks = parse_text_xml(xml_bytes)
     reforms = extract_reforms(blocks)
 
-    norm = NormaCompleta(
+    norm = ParsedNorm(
         metadata=metadata,
-        bloques=tuple(blocks),
+        blocks=tuple(blocks),
         reforms=tuple(reforms),
     )
 
     save_structured_json(cc.data_dir, norm)
 
-    return commit_one(config, country, metadata.identificador, dry_run=dry_run)
+    return commit_one(config, country, metadata.identifier, dry_run=dry_run)

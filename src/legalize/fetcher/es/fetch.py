@@ -13,7 +13,7 @@ import requests
 from rich.console import Console
 
 from legalize.config import Config
-from legalize.models import NormaCompleta
+from legalize.models import ParsedNorm
 from legalize.storage import load_norma_from_json, save_structured_json
 from legalize.transformer.xml_parser import extract_reforms, parse_text_xml
 
@@ -21,11 +21,11 @@ console = Console()
 logger = logging.getLogger(__name__)
 
 
-def fetch_one(config: Config, boe_id: str, force: bool = False) -> NormaCompleta | None:
+def fetch_one(config: Config, boe_id: str, force: bool = False) -> ParsedNorm | None:
     """Download XML + metadata of a law and save to data/.
 
     If already exists in data/ and force=False, does not re-download.
-    Returns NormaCompleta or None on error.
+    Returns ParsedNorm or None on error.
     """
     from legalize.fetcher.cache import FileCache
     from legalize.fetcher.es.client import BOEClient
@@ -56,16 +56,16 @@ def fetch_one(config: Config, boe_id: str, force: bool = False) -> NormaCompleta
             blocks = parse_text_xml(text_xml)
             reforms = extract_reforms(blocks)
 
-            norm = NormaCompleta(
+            norm = ParsedNorm(
                 metadata=metadata,
-                bloques=tuple(blocks),
+                blocks=tuple(blocks),
                 reforms=tuple(reforms),
             )
 
             save_structured_json(cc.data_dir, norm)
 
             console.print(
-                f"  [green]✓[/green] {metadata.titulo_corto}: "
+                f"  [green]✓[/green] {metadata.short_title}: "
                 f"{len(blocks)} blocks, {len(reforms)} versions"
             )
             return norm

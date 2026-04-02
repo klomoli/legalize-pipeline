@@ -1,7 +1,7 @@
 """Parser for BOE consolidated legislation XML.
 
 Converts the XML from endpoint /api/legislacion-consolidada/id/{id}/texto
-into domain data models (Bloque, Version, Reform).
+into domain data models (Block, Version, Reform).
 
 Generalized from scripts/parser.py — works with any norm,
 not just the Constitution.
@@ -14,7 +14,7 @@ from datetime import date
 
 from lxml import etree
 
-from legalize.models import Bloque, Paragraph, Reform, Version
+from legalize.models import Block, Paragraph, Reform, Version
 
 logger = logging.getLogger(__name__)
 
@@ -72,20 +72,20 @@ def _extract_text(element: etree._Element) -> str:
     return "".join(parts)
 
 
-def parse_text_xml(xml_data: bytes | str) -> list[Bloque]:
-    """Parses the BOE consolidated text XML and returns a list of Bloque.
+def parse_text_xml(xml_data: bytes | str) -> list[Block]:
+    """Parses the BOE consolidated text XML and returns a list of Block.
 
     Args:
         xml_data: Raw XML from the /texto endpoint (bytes or string).
 
     Returns:
-        List of Bloque with their historical versions.
+        List of Block with their historical versions.
     """
     if isinstance(xml_data, str):
         xml_data = xml_data.encode("utf-8")
 
     root = etree.fromstring(xml_data)
-    blocks: list[Bloque] = []
+    blocks: list[Block] = []
 
     for block_el in root.iter("bloque"):
         versions: list[Version] = []
@@ -118,18 +118,18 @@ def parse_text_xml(xml_data: bytes | str) -> list[Bloque]:
 
             versions.append(
                 Version(
-                    id_norma=version_el.get("id_norma", ""),
-                    fecha_publicacion=parsed_pub,
-                    fecha_vigencia=parsed_vig if parsed_vig is not None else parsed_pub,
+                    norm_id=version_el.get("id_norma", ""),
+                    publication_date=parsed_pub,
+                    effective_date=parsed_vig if parsed_vig is not None else parsed_pub,
                     paragraphs=tuple(paragraphs),
                 )
             )
 
         blocks.append(
-            Bloque(
+            Block(
                 id=block_el.get("id", ""),
-                tipo=block_el.get("tipo", ""),
-                titulo=block_el.get("titulo", ""),
+                block_type=block_el.get("tipo", ""),
+                title=block_el.get("titulo", ""),
                 versions=tuple(versions),
             )
         )
@@ -137,7 +137,7 @@ def parse_text_xml(xml_data: bytes | str) -> list[Bloque]:
     return blocks
 
 
-def extract_reforms(blocks: list[Bloque]) -> list[Reform]:
+def extract_reforms(blocks: list[Block]) -> list[Reform]:
     """Extracts the list of unique reforms sorted chronologically.
 
     Each reform is a point in time where at least one block changed.
@@ -147,16 +147,16 @@ def extract_reforms(blocks: list[Bloque]) -> list[Reform]:
 
     for block in blocks:
         for version in block.versions:
-            key = (version.fecha_publicacion, version.id_norma)
+            key = (version.publication_date, version.norm_id)
             if key not in reform_map:
                 reform_map[key] = []
             reform_map[key].append(block.id)
 
     reforms = [
         Reform(
-            fecha=reform_date,
-            id_norma=norm_id,
-            bloques_afectados=tuple(block_ids),
+            date=reform_date,
+            norm_id=norm_id,
+            affected_blocks=tuple(block_ids),
         )
         for (reform_date, norm_id), block_ids in sorted(reform_map.items())
     ]
@@ -164,9 +164,9 @@ def extract_reforms(blocks: list[Bloque]) -> list[Reform]:
     return reforms
 
 
-def get_block_at_date(block: Bloque, target_date: date) -> Version | None:
+def get_block_at_date(block: Block, target_date: date) -> Version | None:
     """Returns the version of a block in effect at target_date."""
-    applicable = [v for v in block.versions if v.fecha_publicacion <= target_date]
+    applicable = [v for v in block.versions if v.publication_date <= target_date]
     if not applicable:
         return None
-    return max(applicable, key=lambda v: v.fecha_publicacion)
+    return max(applicable, key=lambda v: v.publication_date)

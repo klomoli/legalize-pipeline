@@ -22,12 +22,12 @@ from legalize.countries import (
     supported_countries,
 )
 from legalize.models import (
-    Bloque,
-    EstadoNorma,
-    NormaCompleta,
-    NormaMetadata,
+    Block,
+    NormMetadata,
+    NormStatus,
     Paragraph,
-    Rango,
+    ParsedNorm,
+    Rank,
     Reform,
     Version,
 )
@@ -42,11 +42,11 @@ from legalize.storage import load_norma_from_json, save_structured_json
 
 
 def _make_norma(
-    identificador: str = "TEST-001",
-    pais: str = "es",
+    identifier: str = "TEST-001",
+    country: str = "es",
     css_classes: list[str] | None = None,
-) -> NormaCompleta:
-    """Build a minimal NormaCompleta for testing."""
+) -> ParsedNorm:
+    """Build a minimal ParsedNorm for testing."""
     paragraphs = []
     if css_classes:
         for i, cls in enumerate(css_classes):
@@ -55,37 +55,37 @@ def _make_norma(
         paragraphs.append(Paragraph(css_class="parrafo", text="Texto del articulo 1."))
 
     version = Version(
-        id_norma=identificador,
-        fecha_publicacion=date(2024, 1, 1),
-        fecha_vigencia=date(2024, 1, 1),
+        norm_id=identifier,
+        publication_date=date(2024, 1, 1),
+        effective_date=date(2024, 1, 1),
         paragraphs=tuple(paragraphs),
     )
-    block = Bloque(
+    block = Block(
         id="a1",
-        tipo="precepto",
-        titulo="Articulo 1",
+        block_type="precepto",
+        title="Articulo 1",
         versions=(version,),
     )
-    metadata = NormaMetadata(
-        titulo="Ley de Pruebas",
-        titulo_corto="Ley Pruebas",
-        identificador=identificador,
-        pais=pais,
-        rango=Rango("ley"),
-        fecha_publicacion=date(2024, 1, 1),
-        estado=EstadoNorma.VIGENTE,
-        departamento="Test",
-        fuente="https://example.com/test",
-        fecha_ultima_modificacion=date(2024, 6, 1),
+    metadata = NormMetadata(
+        title="Ley de Pruebas",
+        short_title="Ley Pruebas",
+        identifier=identifier,
+        country=country,
+        rank=Rank("ley"),
+        publication_date=date(2024, 1, 1),
+        status=NormStatus.IN_FORCE,
+        department="Test",
+        source="https://example.com/test",
+        last_modified=date(2024, 6, 1),
     )
     reform = Reform(
-        fecha=date(2024, 1, 1),
-        id_norma=identificador,
-        bloques_afectados=("a1",),
+        date=date(2024, 1, 1),
+        norm_id=identifier,
+        affected_blocks=("a1",),
     )
-    return NormaCompleta(
+    return ParsedNorm(
         metadata=metadata,
-        bloques=(block,),
+        blocks=(block,),
         reforms=(reform,),
     )
 
@@ -188,29 +188,29 @@ class TestCountriesDispatch:
 
 class TestStorageRoundTrip:
     def test_save_and_load_norma(self, tmp_path):
-        """Create a NormaCompleta, save to JSON, load back, verify all fields match."""
+        """Create a ParsedNorm, save to JSON, load back, verify all fields match."""
         norm = _make_norma()
         save_structured_json(str(tmp_path), norm)
 
-        json_path = tmp_path / "json" / f"{norm.metadata.identificador}.json"
+        json_path = tmp_path / "json" / f"{norm.metadata.identifier}.json"
         assert json_path.exists()
 
         loaded = load_norma_from_json(json_path)
-        assert loaded.metadata.identificador == norm.metadata.identificador
-        assert loaded.metadata.titulo == norm.metadata.titulo.rstrip(". ")
-        assert loaded.metadata.pais == norm.metadata.pais
-        assert loaded.metadata.rango == norm.metadata.rango
-        assert loaded.metadata.fecha_publicacion == norm.metadata.fecha_publicacion
-        assert loaded.metadata.estado == norm.metadata.estado
-        assert len(loaded.bloques) == len(norm.bloques)
+        assert loaded.metadata.identifier == norm.metadata.identifier
+        assert loaded.metadata.title == norm.metadata.title.rstrip(". ")
+        assert loaded.metadata.country == norm.metadata.country
+        assert loaded.metadata.rank == norm.metadata.rank
+        assert loaded.metadata.publication_date == norm.metadata.publication_date
+        assert loaded.metadata.status == norm.metadata.status
+        assert len(loaded.blocks) == len(norm.blocks)
         assert len(loaded.reforms) == len(norm.reforms)
 
         # Check block content round-trips
-        orig_block = norm.bloques[0]
-        loaded_block = loaded.bloques[0]
+        orig_block = norm.blocks[0]
+        loaded_block = loaded.blocks[0]
         assert loaded_block.id == orig_block.id
-        assert loaded_block.tipo == orig_block.tipo
-        assert loaded_block.titulo == orig_block.titulo
+        assert loaded_block.block_type == orig_block.block_type
+        assert loaded_block.title == orig_block.title
         assert len(loaded_block.versions) == len(orig_block.versions)
 
     def test_css_class_round_trip(self, tmp_path):
@@ -218,10 +218,10 @@ class TestStorageRoundTrip:
         norm = _make_norma(css_classes=["titulo_articulo", "parrafo", "lista_letra"])
         save_structured_json(str(tmp_path), norm)
 
-        json_path = tmp_path / "json" / f"{norm.metadata.identificador}.json"
+        json_path = tmp_path / "json" / f"{norm.metadata.identifier}.json"
         loaded = load_norma_from_json(json_path)
 
-        loaded_paragraphs = loaded.bloques[0].versions[0].paragraphs
+        loaded_paragraphs = loaded.blocks[0].versions[0].paragraphs
         assert len(loaded_paragraphs) == 3
         assert loaded_paragraphs[0].css_class == "titulo_articulo"
         assert loaded_paragraphs[1].css_class == "parrafo"
@@ -272,7 +272,7 @@ class TestStorageRoundTrip:
         json_path.write_text(json.dumps(data), encoding="utf-8")
 
         loaded = load_norma_from_json(json_path)
-        paragraphs = loaded.bloques[0].versions[0].paragraphs
+        paragraphs = loaded.blocks[0].versions[0].paragraphs
         assert len(paragraphs) == 2
         assert all(p.css_class == "parrafo" for p in paragraphs)
 
@@ -344,15 +344,15 @@ class TestGenericPipeline:
         assert not hasattr(mock_parser, "extract_reforms_from_sfsr")
 
         blocks = [
-            Bloque(
+            Block(
                 id="a1",
-                tipo="precepto",
-                titulo="Articulo 1",
+                block_type="precepto",
+                title="Articulo 1",
                 versions=(
                     Version(
-                        id_norma="TEST-001",
-                        fecha_publicacion=date(2024, 1, 1),
-                        fecha_vigencia=date(2024, 1, 1),
+                        norm_id="TEST-001",
+                        publication_date=date(2024, 1, 1),
+                        effective_date=date(2024, 1, 1),
                         paragraphs=(Paragraph(css_class="parrafo", text="text"),),
                     ),
                 ),
@@ -369,9 +369,9 @@ class TestGenericPipeline:
         mock_parser = MagicMock()
         mock_parser.extract_reforms_from_sfsr.return_value = [
             Reform(
-                fecha=date(2024, 3, 1),
-                id_norma="SFS-2024:100",
-                bloques_afectados=(),
+                date=date(2024, 3, 1),
+                norm_id="SFS-2024:100",
+                affected_blocks=(),
             )
         ]
 
@@ -380,7 +380,7 @@ class TestGenericPipeline:
 
         result = _extract_reforms_generic(mock_parser, mock_client, "SFS-2024:1", [])
         assert len(result) == 1
-        assert result[0].id_norma == "SFS-2024:100"
+        assert result[0].norm_id == "SFS-2024:100"
         mock_client.get_amendment_register.assert_called_once_with("SFS-2024:1")
         mock_parser.extract_reforms_from_sfsr.assert_called_once_with(b"<html>sfsr data</html>")
 
@@ -393,15 +393,15 @@ class TestGenericPipeline:
         mock_client.get_amendment_register.side_effect = Exception("Network error")
 
         blocks = [
-            Bloque(
+            Block(
                 id="a1",
-                tipo="precepto",
-                titulo="Articulo 1",
+                block_type="precepto",
+                title="Articulo 1",
                 versions=(
                     Version(
-                        id_norma="SFS-2024:1",
-                        fecha_publicacion=date(2024, 1, 1),
-                        fecha_vigencia=date(2024, 1, 1),
+                        norm_id="SFS-2024:1",
+                        publication_date=date(2024, 1, 1),
+                        effective_date=date(2024, 1, 1),
                         paragraphs=(Paragraph(css_class="parrafo", text="text"),),
                     ),
                 ),

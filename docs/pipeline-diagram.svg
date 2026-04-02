@@ -1,0 +1,301 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 680" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F8FAFC"/>
+      <stop offset="100%" stop-color="#F1F5F9"/>
+    </linearGradient>
+    <linearGradient id="fetchGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#DBEAFE"/>
+      <stop offset="100%" stop-color="#BFDBFE"/>
+    </linearGradient>
+    <linearGradient id="transformGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FEF3C7"/>
+      <stop offset="100%" stop-color="#FDE68A"/>
+    </linearGradient>
+    <linearGradient id="commitGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#D1FAE5"/>
+      <stop offset="100%" stop-color="#A7F3D0"/>
+    </linearGradient>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.08"/>
+    </filter>
+    <filter id="shadowSm" x="-2%" y="-2%" width="104%" height="108%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.06"/>
+    </filter>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#3B82F6"/>
+    </marker>
+    <marker id="arrowAmber" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#D97706"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#059669"/>
+    </marker>
+    <marker id="arrowSlate" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#64748B"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1100" height="680" rx="16" fill="url(#bgGrad)"/>
+
+  <!-- Title -->
+  <text x="550" y="38" text-anchor="middle" font-size="20" font-weight="800" fill="#0F172A" letter-spacing="-0.02em">How the Legalize Pipeline Works</text>
+  <text x="550" y="58" text-anchor="middle" font-size="12.5" fill="#64748B">Official government legislation → Version-controlled Markdown in git</text>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- COLUMN 1: DATA SOURCES                 -->
+  <!-- ═══════════════════════════════════════ -->
+
+  <text x="105" y="98" text-anchor="middle" font-size="11" font-weight="700" fill="#94A3B8" letter-spacing="0.08em">DATA SOURCES</text>
+
+  <!-- Spain -->
+  <g filter="url(#shadow)">
+    <rect x="20" y="114" width="170" height="72" rx="10" fill="white" stroke="#EF4444" stroke-width="1.5"/>
+    <text x="36" y="137" font-size="18">🇪🇸</text>
+    <text x="58" y="138" font-size="13" font-weight="700" fill="#1E293B">Spain — BOE</text>
+    <text x="36" y="155" font-size="10" fill="#64748B">REST API · XML</text>
+    <text x="36" y="169" font-size="10" fill="#64748B">Daily summaries + full text</text>
+  </g>
+
+  <!-- France -->
+  <g filter="url(#shadow)">
+    <rect x="20" y="198" width="170" height="72" rx="10" fill="white" stroke="#3B82F6" stroke-width="1.5"/>
+    <text x="36" y="221" font-size="18">🇫🇷</text>
+    <text x="58" y="222" font-size="13" font-weight="700" fill="#1E293B">France — LEGI</text>
+    <text x="36" y="239" font-size="10" fill="#64748B">FTP dump · XML</text>
+    <text x="36" y="253" font-size="10" fill="#64748B">Full dump + daily deltas</text>
+  </g>
+
+  <!-- Sweden -->
+  <g filter="url(#shadow)">
+    <rect x="20" y="282" width="170" height="72" rx="10" fill="white" stroke="#F59E0B" stroke-width="1.5"/>
+    <text x="36" y="305" font-size="18">🇸🇪</text>
+    <text x="58" y="306" font-size="13" font-weight="700" fill="#1E293B">Sweden — Riksdag</text>
+    <text x="36" y="323" font-size="10" fill="#64748B">REST API · HTML</text>
+    <text x="36" y="337" font-size="10" fill="#64748B">Statutes + amendment register</text>
+  </g>
+
+  <!-- Austria -->
+  <g filter="url(#shadow)">
+    <rect x="20" y="366" width="170" height="72" rx="10" fill="white" stroke="#8B5CF6" stroke-width="1.5"/>
+    <text x="36" y="389" font-size="18">🇦🇹</text>
+    <text x="58" y="390" font-size="13" font-weight="700" fill="#1E293B">Austria — RIS</text>
+    <text x="36" y="407" font-size="10" fill="#64748B">REST API · XML</text>
+    <text x="36" y="421" font-size="10" fill="#64748B">Federal law information</text>
+  </g>
+
+  <!-- Dotted box: "Any country" -->
+  <rect x="20" y="450" width="170" height="42" rx="10" fill="none" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="5,4"/>
+  <text x="105" y="474" text-anchor="middle" font-size="11" fill="#94A3B8">+ add any country...</text>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- ARROWS: Sources → Fetch                -->
+  <!-- ═══════════════════════════════════════ -->
+
+  <line x1="190" y1="150" x2="238" y2="210" stroke="#3B82F6" stroke-width="1.5" marker-end="url(#arrowBlue)" opacity="0.5"/>
+  <line x1="190" y1="234" x2="238" y2="234" stroke="#3B82F6" stroke-width="1.5" marker-end="url(#arrowBlue)" opacity="0.5"/>
+  <line x1="190" y1="318" x2="238" y2="258" stroke="#3B82F6" stroke-width="1.5" marker-end="url(#arrowBlue)" opacity="0.5"/>
+  <line x1="190" y1="402" x2="238" y2="270" stroke="#3B82F6" stroke-width="1.5" marker-end="url(#arrowBlue)" opacity="0.3"/>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- COLUMN 2: THE PIPELINE                 -->
+  <!-- ═══════════════════════════════════════ -->
+
+  <!-- Pipeline container -->
+  <rect x="240" y="88" width="540" height="530" rx="14" fill="white" stroke="#E2E8F0" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="510" y="108" text-anchor="middle" font-size="11" font-weight="700" fill="#94A3B8" letter-spacing="0.08em">LEGALIZE PIPELINE</text>
+  <text x="510" y="121" text-anchor="middle" font-size="9.5" fill="#CBD5E1">engine/src/legalize/</text>
+
+  <!-- PHASE 1: FETCH -->
+  <rect x="262" y="136" width="496" height="130" rx="10" fill="url(#fetchGrad)" stroke="#93C5FD" stroke-width="1"/>
+  <text x="280" y="157" font-size="12" font-weight="700" fill="#1E40AF">① FETCH</text>
+  <text x="347" y="157" font-size="10" fill="#3B82F6">Download &amp; read raw data</text>
+
+  <!-- Fetch substeps -->
+  <g filter="url(#shadowSm)">
+    <rect x="278" y="168" width="130" height="52" rx="7" fill="white" stroke="#93C5FD" stroke-width="1"/>
+    <text x="343" y="188" text-anchor="middle" font-size="10.5" font-weight="600" fill="#1E40AF">Discovery</text>
+    <text x="343" y="202" text-anchor="middle" font-size="9" fill="#64748B">Find all norm IDs</text>
+    <text x="343" y="213" text-anchor="middle" font-size="8.5" fill="#93C5FD">discovery.py</text>
+  </g>
+
+  <line x1="410" y1="194" x2="430" y2="194" stroke="#3B82F6" stroke-width="1.2" marker-end="url(#arrowBlue)"/>
+
+  <g filter="url(#shadowSm)">
+    <rect x="432" y="168" width="130" height="52" rx="7" fill="white" stroke="#93C5FD" stroke-width="1"/>
+    <text x="497" y="188" text-anchor="middle" font-size="10.5" font-weight="600" fill="#1E40AF">Client</text>
+    <text x="497" y="202" text-anchor="middle" font-size="9" fill="#64748B">Fetch text + metadata</text>
+    <text x="497" y="213" text-anchor="middle" font-size="8.5" fill="#93C5FD">client.py</text>
+  </g>
+
+  <line x1="564" y1="194" x2="584" y2="194" stroke="#3B82F6" stroke-width="1.2" marker-end="url(#arrowBlue)"/>
+
+  <g filter="url(#shadowSm)">
+    <rect x="586" y="168" width="156" height="52" rx="7" fill="white" stroke="#93C5FD" stroke-width="1"/>
+    <text x="664" y="188" text-anchor="middle" font-size="10.5" font-weight="600" fill="#1E40AF">Raw data (XML/HTML)</text>
+    <text x="664" y="202" text-anchor="middle" font-size="9" fill="#64748B">Country-specific format</text>
+    <text x="664" y="213" text-anchor="middle" font-size="8.5" fill="#93C5FD">cached in data/</text>
+  </g>
+
+  <!-- Fetch note -->
+  <text x="278" y="248" font-size="9" fill="#60A5FA" font-style="italic">Each country has its own fetcher: different APIs, formats, auth — unified by base.py interfaces</text>
+
+  <!-- Arrow Fetch → Transform -->
+  <line x1="510" y1="268" x2="510" y2="290" stroke="#D97706" stroke-width="1.8" marker-end="url(#arrowAmber)"/>
+
+  <!-- PHASE 2: TRANSFORM -->
+  <rect x="262" y="292" width="496" height="148" rx="10" fill="url(#transformGrad)" stroke="#FCD34D" stroke-width="1"/>
+  <text x="280" y="313" font-size="12" font-weight="700" fill="#92400E">② TRANSFORM</text>
+  <text x="370" y="313" font-size="10" fill="#B45309">Parse into unified model → render Markdown</text>
+
+  <!-- Transform substeps -->
+  <g filter="url(#shadowSm)">
+    <rect x="278" y="324" width="132" height="62" rx="7" fill="white" stroke="#FCD34D" stroke-width="1"/>
+    <text x="344" y="344" text-anchor="middle" font-size="10.5" font-weight="600" fill="#92400E">Parser</text>
+    <text x="344" y="358" text-anchor="middle" font-size="9" fill="#64748B">XML/HTML → Block[]</text>
+    <text x="344" y="370" text-anchor="middle" font-size="9" fill="#64748B">with version history</text>
+    <text x="344" y="381" text-anchor="middle" font-size="8.5" fill="#D97706">parser.py</text>
+  </g>
+
+  <line x1="412" y1="355" x2="430" y2="355" stroke="#D97706" stroke-width="1.2" marker-end="url(#arrowAmber)"/>
+
+  <g filter="url(#shadowSm)">
+    <rect x="432" y="324" width="132" height="62" rx="7" fill="white" stroke="#FCD34D" stroke-width="1"/>
+    <text x="498" y="340" text-anchor="middle" font-size="10.5" font-weight="600" fill="#92400E">Unified Model</text>
+    <text x="498" y="354" text-anchor="middle" font-size="9" fill="#64748B">NormMetadata</text>
+    <text x="498" y="366" text-anchor="middle" font-size="9" fill="#64748B">Block → Version → Para.</text>
+    <text x="498" y="378" text-anchor="middle" font-size="8.5" fill="#D97706">models.py</text>
+  </g>
+
+  <line x1="566" y1="355" x2="584" y2="355" stroke="#D97706" stroke-width="1.2" marker-end="url(#arrowAmber)"/>
+
+  <g filter="url(#shadowSm)">
+    <rect x="586" y="324" width="156" height="62" rx="7" fill="white" stroke="#FCD34D" stroke-width="1"/>
+    <text x="664" y="344" text-anchor="middle" font-size="10.5" font-weight="600" fill="#92400E">Markdown Renderer</text>
+    <text x="664" y="358" text-anchor="middle" font-size="9" fill="#64748B">YAML frontmatter</text>
+    <text x="664" y="370" text-anchor="middle" font-size="9" fill="#64748B">+ headings + articles</text>
+    <text x="664" y="381" text-anchor="middle" font-size="8.5" fill="#D97706">markdown.py · slug.py</text>
+  </g>
+
+  <!-- Transform note -->
+  <text x="278" y="410" font-size="9" fill="#D97706" font-style="italic">The model is the same for all countries: Block (article/section) with temporal Versions of Paragraphs</text>
+  <text x="278" y="422" font-size="9" fill="#D97706" font-style="italic">render_norm_at_date() generates the law text as it looked on any given date</text>
+
+  <!-- Arrow Transform → Commit -->
+  <line x1="510" y1="442" x2="510" y2="462" stroke="#059669" stroke-width="1.8" marker-end="url(#arrowGreen)"/>
+
+  <!-- PHASE 3: COMMIT -->
+  <rect x="262" y="464" width="496" height="142" rx="10" fill="url(#commitGrad)" stroke="#6EE7B7" stroke-width="1"/>
+  <text x="280" y="485" font-size="12" font-weight="700" fill="#065F46">③ COMMIT</text>
+  <text x="345" y="485" font-size="10" fill="#059669">Build git history from reform timeline</text>
+
+  <!-- Commit substeps -->
+  <g filter="url(#shadowSm)">
+    <rect x="278" y="496" width="148" height="62" rx="7" fill="white" stroke="#6EE7B7" stroke-width="1"/>
+    <text x="352" y="516" text-anchor="middle" font-size="10.5" font-weight="600" fill="#065F46">Reform Timeline</text>
+    <text x="352" y="530" text-anchor="middle" font-size="9" fill="#64748B">Sort all changes by date</text>
+    <text x="352" y="542" text-anchor="middle" font-size="9" fill="#64748B">1978 → 1992 → 2024 → ...</text>
+    <text x="352" y="553" text-anchor="middle" font-size="8.5" fill="#059669">pipeline.py</text>
+  </g>
+
+  <line x1="428" y1="527" x2="448" y2="527" stroke="#059669" stroke-width="1.2" marker-end="url(#arrowGreen)"/>
+
+  <g filter="url(#shadowSm)">
+    <rect x="450" y="496" width="148" height="62" rx="7" fill="white" stroke="#6EE7B7" stroke-width="1"/>
+    <text x="524" y="516" text-anchor="middle" font-size="10.5" font-weight="600" fill="#065F46">Commit Builder</text>
+    <text x="524" y="530" text-anchor="middle" font-size="9" fill="#64748B">Message + trailers</text>
+    <text x="524" y="542" text-anchor="middle" font-size="9" fill="#64748B">Author date = reform date</text>
+    <text x="524" y="553" text-anchor="middle" font-size="8.5" fill="#059669">message.py · author.py</text>
+  </g>
+
+  <line x1="600" y1="527" x2="620" y2="527" stroke="#059669" stroke-width="1.2" marker-end="url(#arrowGreen)"/>
+
+  <g filter="url(#shadowSm)">
+    <rect x="622" y="496" width="104" height="62" rx="7" fill="white" stroke="#6EE7B7" stroke-width="1"/>
+    <text x="674" y="516" text-anchor="middle" font-size="10.5" font-weight="600" fill="#065F46">Git Ops</text>
+    <text x="674" y="530" text-anchor="middle" font-size="9" fill="#64748B">write → add → commit</text>
+    <text x="674" y="542" text-anchor="middle" font-size="9" fill="#64748B">Idempotent (trailers)</text>
+    <text x="674" y="553" text-anchor="middle" font-size="8.5" fill="#059669">git_ops.py</text>
+  </g>
+
+  <!-- Commit note -->
+  <text x="278" y="577" font-size="9" fill="#059669" font-style="italic">Each reform becomes a git commit with the actual date as author date — git log = legal history</text>
+  <text x="278" y="589" font-size="9" fill="#059669" font-style="italic">Idempotent: Source-Id trailers prevent duplicate commits on re-runs</text>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- COLUMN 3: OUTPUT                        -->
+  <!-- ═══════════════════════════════════════ -->
+
+  <!-- Arrow Pipeline → Output -->
+  <line x1="780" y1="300" x2="812" y2="210" stroke="#64748B" stroke-width="1.5" marker-end="url(#arrowSlate)" opacity="0.5"/>
+  <line x1="780" y1="340" x2="812" y2="300" stroke="#64748B" stroke-width="1.5" marker-end="url(#arrowSlate)" opacity="0.5"/>
+  <line x1="780" y1="380" x2="812" y2="390" stroke="#64748B" stroke-width="1.5" marker-end="url(#arrowSlate)" opacity="0.5"/>
+  <line x1="780" y1="420" x2="812" y2="480" stroke="#64748B" stroke-width="1.5" marker-end="url(#arrowSlate)" opacity="0.3"/>
+
+  <text x="930" y="98" text-anchor="middle" font-size="11" font-weight="700" fill="#94A3B8" letter-spacing="0.08em">OUTPUT REPOS</text>
+
+  <!-- ES repo -->
+  <g filter="url(#shadow)">
+    <rect x="814" y="114" width="174" height="82" rx="10" fill="white" stroke="#0F172A" stroke-width="1.5"/>
+    <text x="830" y="136" font-size="11" font-weight="700" fill="#0F172A">📁 legalize-es</text>
+    <text x="830" y="152" font-size="9" fill="#64748B">8,600+ laws as .md files</text>
+    <text x="830" y="164" font-size="9" fill="#64748B">120,000+ commits</text>
+    <text x="830" y="178" font-size="8.5" fill="#3B82F6">git log constitucion.md</text>
+    <text x="830" y="189" font-size="8.5" fill="#3B82F6">→ every reform since 1978</text>
+  </g>
+
+  <!-- FR repo -->
+  <g filter="url(#shadow)">
+    <rect x="814" y="208" width="174" height="82" rx="10" fill="white" stroke="#0F172A" stroke-width="1.5"/>
+    <text x="830" y="230" font-size="11" font-weight="700" fill="#0F172A">📁 legalize-fr</text>
+    <text x="830" y="246" font-size="9" fill="#64748B">77 codes + Constitution</text>
+    <text x="830" y="258" font-size="9" fill="#64748B">Thousands of commits</text>
+    <text x="830" y="272" font-size="8.5" fill="#3B82F6">git log code-civil.md</text>
+    <text x="830" y="283" font-size="8.5" fill="#3B82F6">→ full history since Napoleon</text>
+  </g>
+
+  <!-- SE repo -->
+  <g filter="url(#shadow)">
+    <rect x="814" y="302" width="174" height="82" rx="10" fill="white" stroke="#0F172A" stroke-width="1.5"/>
+    <text x="830" y="324" font-size="11" font-weight="700" fill="#0F172A">📁 legalize-se</text>
+    <text x="830" y="340" font-size="9" fill="#64748B">Swedish statutes (SFS)</text>
+    <text x="830" y="352" font-size="9" fill="#64748B">Amendment history from SFSR</text>
+    <text x="830" y="366" font-size="8.5" fill="#3B82F6">git diff HEAD~1</text>
+    <text x="830" y="377" font-size="8.5" fill="#3B82F6">→ what changed in each reform</text>
+  </g>
+
+  <!-- AT repo -->
+  <g filter="url(#shadow)">
+    <rect x="814" y="396" width="174" height="72" rx="10" fill="white" stroke="#0F172A" stroke-width="1.5"/>
+    <text x="830" y="418" font-size="11" font-weight="700" fill="#0F172A">📁 legalize-at</text>
+    <text x="830" y="434" font-size="9" fill="#64748B">Austrian federal laws</text>
+    <text x="830" y="446" font-size="9" fill="#64748B">From RIS open data</text>
+    <text x="830" y="460" font-size="8.5" fill="#3B82F6">Same format as all others</text>
+  </g>
+
+  <!-- Dotted future repo -->
+  <rect x="814" y="480" width="174" height="38" rx="10" fill="none" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="5,4"/>
+  <text x="901" y="504" text-anchor="middle" font-size="10" fill="#94A3B8">+ any country...</text>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- BOTTOM: KEY INSIGHT                     -->
+  <!-- ═══════════════════════════════════════ -->
+
+  <rect x="20" y="530" width="196" height="130" rx="12" fill="#0F172A" filter="url(#shadow)"/>
+  <text x="118" y="556" text-anchor="middle" font-size="12" font-weight="800" fill="#F8FAFC">💡 The Key Idea</text>
+  <text x="118" y="578" text-anchor="middle" font-size="10" fill="#94A3B8">Each law = one .md file</text>
+  <text x="118" y="596" text-anchor="middle" font-size="10" fill="#94A3B8">Each reform = one git commit</text>
+  <text x="118" y="614" text-anchor="middle" font-size="10" fill="#94A3B8">Author date = actual date</text>
+  <line x1="50" y1="626" x2="186" y2="626" stroke="#334155" stroke-width="1"/>
+  <text x="118" y="644" text-anchor="middle" font-size="10.5" font-weight="700" fill="#38BDF8">Git history IS legal history</text>
+
+  <!-- Daily update badge -->
+  <rect x="814" y="540" width="174" height="68" rx="12" fill="#0F172A" filter="url(#shadow)"/>
+  <text x="901" y="563" text-anchor="middle" font-size="11" font-weight="700" fill="#F8FAFC">🔄 Stays up to date</text>
+  <text x="901" y="581" text-anchor="middle" font-size="9.5" fill="#94A3B8">GitHub Actions cron</text>
+  <text x="901" y="595" text-anchor="middle" font-size="9.5" fill="#94A3B8">Mon–Sat at 10:00 UTC</text>
+
+  <!-- CI label -->
+  <text x="901" y="630" text-anchor="middle" font-size="8.5" fill="#CBD5E1">daily-update.yml · bootstrap.yml · ci.yml</text>
+</svg>

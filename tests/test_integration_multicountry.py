@@ -2,7 +2,7 @@
 
 Tests that commit_one, commit_all, and storage round-trip work
 correctly for norms from different countries (ES, FR, SE).
-No HTTP calls — all data is synthetic NormaCompleta objects.
+No HTTP calls — all data is synthetic ParsedNorm objects.
 """
 
 import subprocess
@@ -13,12 +13,12 @@ import pytest
 
 from legalize.config import Config, CountryConfig, GitConfig
 from legalize.models import (
-    Bloque,
-    EstadoNorma,
-    NormaCompleta,
-    NormaMetadata,
+    Block,
+    NormMetadata,
+    NormStatus,
     Paragraph,
-    Rango,
+    ParsedNorm,
+    Rank,
     Reform,
     Version,
 )
@@ -34,23 +34,23 @@ from legalize.transformer.slug import norm_to_filepath
 
 def _make_version(source_id: str, d: date, text: str) -> Version:
     return Version(
-        id_norma=source_id,
-        fecha_publicacion=d,
-        fecha_vigencia=d,
+        norm_id=source_id,
+        publication_date=d,
+        effective_date=d,
         paragraphs=(Paragraph(css_class="parrafo", text=text),),
     )
 
 
-def _make_block(block_id: str, titulo: str, versions: list[Version]) -> Bloque:
-    return Bloque(
+def _make_block(block_id: str, title: str, versions: list[Version]) -> Block:
+    return Block(
         id=block_id,
-        tipo="precepto",
-        titulo=titulo,
+        block_type="precepto",
+        title=title,
         versions=tuple(versions),
     )
 
 
-def _make_norm_es() -> NormaCompleta:
+def _make_norm_es() -> ParsedNorm:
     """Spanish norm with 2 blocks, 2 reforms (original + amendment)."""
     d1 = date(2000, 1, 15)
     d2 = date(2010, 6, 20)
@@ -83,26 +83,26 @@ def _make_norm_es() -> NormaCompleta:
     ]
 
     reforms = [
-        Reform(fecha=d1, id_norma=src1, bloques_afectados=("a1", "a2", "a3")),
-        Reform(fecha=d2, id_norma=src2, bloques_afectados=("a1",)),
+        Reform(date=d1, norm_id=src1, affected_blocks=("a1", "a2", "a3")),
+        Reform(date=d2, norm_id=src2, affected_blocks=("a1",)),
     ]
 
-    metadata = NormaMetadata(
-        titulo="Ley de Prueba Española",
-        titulo_corto="Ley de Prueba",
-        identificador="BOE-A-2000-100",
-        pais="es",
-        rango=Rango.LEY,
-        fecha_publicacion=d1,
-        estado=EstadoNorma.VIGENTE,
-        departamento="Ministerio de Justicia",
-        fuente="https://www.boe.es/eli/es/l/2000/01/15/1",
+    metadata = NormMetadata(
+        title="Ley de Prueba Española",
+        short_title="Ley de Prueba",
+        identifier="BOE-A-2000-100",
+        country="es",
+        rank=Rank.LEY,
+        publication_date=d1,
+        status=NormStatus.IN_FORCE,
+        department="Ministerio de Justicia",
+        source="https://www.boe.es/eli/es/l/2000/01/15/1",
     )
 
-    return NormaCompleta(metadata=metadata, bloques=tuple(blocks), reforms=tuple(reforms))
+    return ParsedNorm(metadata=metadata, blocks=tuple(blocks), reforms=tuple(reforms))
 
 
-def _make_norm_fr() -> NormaCompleta:
+def _make_norm_fr() -> ParsedNorm:
     """French norm with 2 blocks, 2 reforms."""
     d1 = date(1804, 3, 21)
     d2 = date(2016, 10, 1)
@@ -137,26 +137,26 @@ def _make_norm_fr() -> NormaCompleta:
     ]
 
     reforms = [
-        Reform(fecha=d1, id_norma=src1, bloques_afectados=("art1", "art2", "art3")),
-        Reform(fecha=d2, id_norma=src2, bloques_afectados=("art1",)),
+        Reform(date=d1, norm_id=src1, affected_blocks=("art1", "art2", "art3")),
+        Reform(date=d2, norm_id=src2, affected_blocks=("art1",)),
     ]
 
-    metadata = NormaMetadata(
-        titulo="Code civil",
-        titulo_corto="Code civil",
-        identificador="LEGITEXT000006070721",
-        pais="fr",
-        rango=Rango.CODE,
-        fecha_publicacion=d1,
-        estado=EstadoNorma.VIGENTE,
-        departamento="Ministère de la Justice",
-        fuente="https://www.legifrance.gouv.fr/codes/texte_lc/LEGITEXT000006070721",
+    metadata = NormMetadata(
+        title="Code civil",
+        short_title="Code civil",
+        identifier="LEGITEXT000006070721",
+        country="fr",
+        rank=Rank.CODE,
+        publication_date=d1,
+        status=NormStatus.IN_FORCE,
+        department="Ministère de la Justice",
+        source="https://www.legifrance.gouv.fr/codes/texte_lc/LEGITEXT000006070721",
     )
 
-    return NormaCompleta(metadata=metadata, bloques=tuple(blocks), reforms=tuple(reforms))
+    return ParsedNorm(metadata=metadata, blocks=tuple(blocks), reforms=tuple(reforms))
 
 
-def _make_norm_se() -> NormaCompleta:
+def _make_norm_se() -> ParsedNorm:
     """Swedish norm with 3 blocks, 2 reforms."""
     d1 = date(1962, 1, 1)
     d2 = date(2020, 7, 1)
@@ -189,23 +189,23 @@ def _make_norm_se() -> NormaCompleta:
     ]
 
     reforms = [
-        Reform(fecha=d1, id_norma=src1, bloques_afectados=("kap1p1", "kap1p2", "kap1p3")),
-        Reform(fecha=d2, id_norma=src2, bloques_afectados=("kap1p1",)),
+        Reform(date=d1, norm_id=src1, affected_blocks=("kap1p1", "kap1p2", "kap1p3")),
+        Reform(date=d2, norm_id=src2, affected_blocks=("kap1p1",)),
     ]
 
-    metadata = NormaMetadata(
-        titulo="Brottsbalk",
-        titulo_corto="Brottsbalk",
-        identificador="SFS-1962-700",
-        pais="se",
-        rango=Rango("lag"),
-        fecha_publicacion=d1,
-        estado=EstadoNorma.VIGENTE,
-        departamento="Justitiedepartementet",
-        fuente="https://www.riksdagen.se/sv/dokument-och-lagar/dokument/svensk-forfattningssamling/brottsbalk-1962700_sfs-1962-700/",
+    metadata = NormMetadata(
+        title="Brottsbalk",
+        short_title="Brottsbalk",
+        identifier="SFS-1962-700",
+        country="se",
+        rank=Rank("lag"),
+        publication_date=d1,
+        status=NormStatus.IN_FORCE,
+        department="Justitiedepartementet",
+        source="https://www.riksdagen.se/sv/dokument-och-lagar/dokument/svensk-forfattningssamling/brottsbalk-1962700_sfs-1962-700/",
     )
 
-    return NormaCompleta(metadata=metadata, bloques=tuple(blocks), reforms=tuple(reforms))
+    return ParsedNorm(metadata=metadata, blocks=tuple(blocks), reforms=tuple(reforms))
 
 
 # ─────────────────────────────────────────────
@@ -234,9 +234,9 @@ def test_config(tmp_path) -> Config:
     )
 
 
-def _save_norm(config: Config, norm: NormaCompleta) -> Path:
+def _save_norm(config: Config, norm: ParsedNorm) -> Path:
     """Save a norm to JSON and return the path."""
-    cc = config.get_country(norm.metadata.pais)
+    cc = config.get_country(norm.metadata.country)
     return save_structured_json(cc.data_dir, norm)
 
 
@@ -296,7 +296,7 @@ class TestGenericCommitMultiCountry:
     def test_correct_number_of_commits(self, test_config, make_norm, expected_dir):
         norm = make_norm()
         _save_norm(test_config, norm)
-        count = commit_one(test_config, norm.metadata.pais, norm.metadata.identificador)
+        count = commit_one(test_config, norm.metadata.country, norm.metadata.identifier)
         assert count == 2
 
     @pytest.mark.parametrize(
@@ -311,17 +311,17 @@ class TestGenericCommitMultiCountry:
     def test_markdown_file_at_correct_path(self, test_config, make_norm, expected_dir):
         norm = make_norm()
         _save_norm(test_config, norm)
-        commit_one(test_config, norm.metadata.pais, norm.metadata.identificador)
+        commit_one(test_config, norm.metadata.country, norm.metadata.identifier)
 
         md_path = (
             Path(test_config.get_country("es").repo_path)
             / expected_dir
-            / f"{norm.metadata.identificador}.md"
+            / f"{norm.metadata.identifier}.md"
         )
         assert md_path.exists(), f"Expected {md_path} to exist"
 
         content = md_path.read_text(encoding="utf-8")
-        assert norm.metadata.titulo_corto in content
+        assert norm.metadata.short_title in content
 
     @pytest.mark.parametrize(
         "make_norm,expected_dir",
@@ -335,15 +335,15 @@ class TestGenericCommitMultiCountry:
     def test_frontmatter_has_correct_pais(self, test_config, make_norm, expected_dir):
         norm = make_norm()
         _save_norm(test_config, norm)
-        commit_one(test_config, norm.metadata.pais, norm.metadata.identificador)
+        commit_one(test_config, norm.metadata.country, norm.metadata.identifier)
 
         md_path = (
             Path(test_config.get_country("es").repo_path)
             / expected_dir
-            / f"{norm.metadata.identificador}.md"
+            / f"{norm.metadata.identifier}.md"
         )
         content = md_path.read_text(encoding="utf-8")
-        assert f'pais: "{norm.metadata.pais}"' in content
+        assert f'pais: "{norm.metadata.country}"' in content
 
     @pytest.mark.parametrize(
         "make_norm,expected_dir",
@@ -357,7 +357,7 @@ class TestGenericCommitMultiCountry:
     def test_git_commits_have_correct_trailers(self, test_config, make_norm, expected_dir):
         norm = make_norm()
         _save_norm(test_config, norm)
-        commit_one(test_config, norm.metadata.pais, norm.metadata.identificador)
+        commit_one(test_config, norm.metadata.country, norm.metadata.identifier)
 
         bodies = _git_log_bodies(test_config.get_country("es").repo_path)
         assert len(bodies) == 2
@@ -366,7 +366,7 @@ class TestGenericCommitMultiCountry:
         last_body = bodies[-1]
         assert "Source-Id:" in last_body
         assert "Source-Date:" in last_body
-        assert f"Norm-Id: {norm.metadata.identificador}" in last_body
+        assert f"Norm-Id: {norm.metadata.identifier}" in last_body
 
 
 # ─────────────────────────────────────────────
@@ -378,7 +378,7 @@ class TestMultiVersionNorm:
     """Test a norm with 4+ versions (like the Constitution with 4 reforms)."""
 
     @staticmethod
-    def _make_four_version_norm() -> NormaCompleta:
+    def _make_four_version_norm() -> ParsedNorm:
         dates = [date(1978, 12, 29), date(1992, 8, 28), date(2011, 9, 27), date(2024, 2, 17)]
         sources = ["SRC-ORIG", "SRC-1992", "SRC-2011", "SRC-2024"]
 
@@ -410,36 +410,36 @@ class TestMultiVersionNorm:
         ]
 
         reforms = [
-            Reform(fecha=dates[0], id_norma=sources[0], bloques_afectados=("a1", "a2", "a3")),
-            Reform(fecha=dates[1], id_norma=sources[1], bloques_afectados=("a1",)),
-            Reform(fecha=dates[2], id_norma=sources[2], bloques_afectados=("a2",)),
-            Reform(fecha=dates[3], id_norma=sources[3], bloques_afectados=("a3",)),
+            Reform(date=dates[0], norm_id=sources[0], affected_blocks=("a1", "a2", "a3")),
+            Reform(date=dates[1], norm_id=sources[1], affected_blocks=("a1",)),
+            Reform(date=dates[2], norm_id=sources[2], affected_blocks=("a2",)),
+            Reform(date=dates[3], norm_id=sources[3], affected_blocks=("a3",)),
         ]
 
-        metadata = NormaMetadata(
-            titulo="Norma con Cuatro Versiones",
-            titulo_corto="Norma Cuatro Versiones",
-            identificador="TEST-FOUR-VERSIONS",
-            pais="es",
-            rango=Rango.CONSTITUCION,
-            fecha_publicacion=dates[0],
-            estado=EstadoNorma.VIGENTE,
-            departamento="Test",
-            fuente="https://example.com/test",
+        metadata = NormMetadata(
+            title="Norma con Cuatro Versiones",
+            short_title="Norma Cuatro Versiones",
+            identifier="TEST-FOUR-VERSIONS",
+            country="es",
+            rank=Rank.CONSTITUCION,
+            publication_date=dates[0],
+            status=NormStatus.IN_FORCE,
+            department="Test",
+            source="https://example.com/test",
         )
 
-        return NormaCompleta(metadata=metadata, bloques=tuple(blocks), reforms=tuple(reforms))
+        return ParsedNorm(metadata=metadata, blocks=tuple(blocks), reforms=tuple(reforms))
 
     def test_creates_four_commits(self, test_config):
         norm = self._make_four_version_norm()
         _save_norm(test_config, norm)
-        count = commit_one(test_config, norm.metadata.pais, norm.metadata.identificador)
+        count = commit_one(test_config, norm.metadata.country, norm.metadata.identifier)
         assert count == 4
 
     def test_each_commit_has_correct_historical_date(self, test_config):
         norm = self._make_four_version_norm()
         _save_norm(test_config, norm)
-        commit_one(test_config, norm.metadata.pais, norm.metadata.identificador)
+        commit_one(test_config, norm.metadata.country, norm.metadata.identifier)
 
         dates = _git_log_dates(test_config.get_country("es").repo_path)
         assert dates == ["1978-12-29", "1992-08-28", "2011-09-27", "2024-02-17"]
@@ -447,7 +447,7 @@ class TestMultiVersionNorm:
     def test_markdown_content_changes_between_versions(self, test_config):
         norm = self._make_four_version_norm()
         _save_norm(test_config, norm)
-        commit_one(test_config, norm.metadata.pais, norm.metadata.identificador)
+        commit_one(test_config, norm.metadata.country, norm.metadata.identifier)
 
         # Get content at each commit
         result = subprocess.run(
@@ -484,8 +484,8 @@ class TestMultiVersionNorm:
     def test_idempotent_rerun_creates_zero_commits(self, test_config):
         norm = self._make_four_version_norm()
         _save_norm(test_config, norm)
-        count1 = commit_one(test_config, norm.metadata.pais, norm.metadata.identificador)
-        count2 = commit_one(test_config, norm.metadata.pais, norm.metadata.identificador)
+        count1 = commit_one(test_config, norm.metadata.country, norm.metadata.identifier)
+        count2 = commit_one(test_config, norm.metadata.country, norm.metadata.identifier)
         assert count1 == 4
         assert count2 == 0
 
@@ -508,15 +508,15 @@ class TestStorageGenericRoundTrip:
         json_path = _save_norm(test_config, norm)
         loaded = load_norma_from_json(json_path)
 
-        assert loaded.metadata.titulo == norm.metadata.titulo.rstrip(". ")
-        assert loaded.metadata.titulo_corto == norm.metadata.titulo_corto
-        assert loaded.metadata.identificador == norm.metadata.identificador
-        assert loaded.metadata.pais == norm.metadata.pais
-        assert loaded.metadata.rango == norm.metadata.rango
-        assert loaded.metadata.fecha_publicacion == norm.metadata.fecha_publicacion
-        assert loaded.metadata.estado == norm.metadata.estado
-        assert loaded.metadata.departamento == norm.metadata.departamento
-        assert loaded.metadata.fuente == norm.metadata.fuente
+        assert loaded.metadata.title == norm.metadata.title.rstrip(". ")
+        assert loaded.metadata.short_title == norm.metadata.short_title
+        assert loaded.metadata.identifier == norm.metadata.identifier
+        assert loaded.metadata.country == norm.metadata.country
+        assert loaded.metadata.rank == norm.metadata.rank
+        assert loaded.metadata.publication_date == norm.metadata.publication_date
+        assert loaded.metadata.status == norm.metadata.status
+        assert loaded.metadata.department == norm.metadata.department
+        assert loaded.metadata.source == norm.metadata.source
 
     @pytest.mark.parametrize(
         "make_norm",
@@ -528,16 +528,16 @@ class TestStorageGenericRoundTrip:
         json_path = _save_norm(test_config, norm)
         loaded = load_norma_from_json(json_path)
 
-        assert len(loaded.bloques) == len(norm.bloques)
-        for orig, loaded_b in zip(norm.bloques, loaded.bloques):
+        assert len(loaded.blocks) == len(norm.blocks)
+        for orig, loaded_b in zip(norm.blocks, loaded.blocks):
             assert loaded_b.id == orig.id
-            assert loaded_b.tipo == orig.tipo
-            assert loaded_b.titulo == orig.titulo
+            assert loaded_b.block_type == orig.block_type
+            assert loaded_b.title == orig.title
             assert len(loaded_b.versions) == len(orig.versions)
 
             for orig_v, loaded_v in zip(orig.versions, loaded_b.versions):
-                assert loaded_v.id_norma == orig_v.id_norma
-                assert loaded_v.fecha_publicacion == orig_v.fecha_publicacion
+                assert loaded_v.norm_id == orig_v.norm_id
+                assert loaded_v.publication_date == orig_v.publication_date
                 # Paragraph text should match
                 orig_text = "\n\n".join(p.text for p in orig_v.paragraphs)
                 loaded_text = "\n\n".join(p.text for p in loaded_v.paragraphs)
@@ -555,8 +555,8 @@ class TestStorageGenericRoundTrip:
 
         assert len(loaded.reforms) == len(norm.reforms)
         for orig, loaded_r in zip(norm.reforms, loaded.reforms):
-            assert loaded_r.fecha == orig.fecha
-            assert loaded_r.id_norma == orig.id_norma
+            assert loaded_r.date == orig.date
+            assert loaded_r.norm_id == orig.norm_id
 
     def test_different_pais_values_preserved(self, test_config):
         """All three countries have distinct pais values after round-trip."""
@@ -565,7 +565,7 @@ class TestStorageGenericRoundTrip:
         for norm in norms:
             json_path = _save_norm(test_config, norm)
             loaded = load_norma_from_json(json_path)
-            loaded_pais.append(loaded.metadata.pais)
+            loaded_pais.append(loaded.metadata.country)
 
         assert loaded_pais == ["es", "fr", "se"]
 
@@ -576,7 +576,7 @@ class TestStorageGenericRoundTrip:
         for norm in norms:
             json_path = _save_norm(test_config, norm)
             loaded = load_norma_from_json(json_path)
-            loaded_rangos.append(str(loaded.metadata.rango))
+            loaded_rangos.append(str(loaded.metadata.rank))
 
         assert loaded_rangos == ["ley", "code", "lag"]
 
@@ -682,17 +682,17 @@ class TestSlugMultiCountry:
 
     def test_jurisdiction_overrides_pais(self):
         """Autonomous community norms use jurisdiccion as directory."""
-        meta = NormaMetadata(
-            titulo="Ley vasca",
-            titulo_corto="Ley vasca",
-            identificador="BOE-A-2020-615",
-            pais="es",
-            rango=Rango.LEY,
-            fecha_publicacion=date(2020, 1, 1),
-            estado=EstadoNorma.VIGENTE,
-            departamento="Test",
-            fuente="https://example.com",
-            jurisdiccion="es-pv",
+        meta = NormMetadata(
+            title="Ley vasca",
+            short_title="Ley vasca",
+            identifier="BOE-A-2020-615",
+            country="es",
+            rank=Rank.LEY,
+            publication_date=date(2020, 1, 1),
+            status=NormStatus.IN_FORCE,
+            department="Test",
+            source="https://example.com",
+            jurisdiction="es-pv",
         )
         assert norm_to_filepath(meta) == "es-pv/BOE-A-2020-615.md"
 
@@ -707,7 +707,7 @@ class TestBootstrapIncludesAllBlocks:
     after the first reform. This tests the include_all fix."""
 
     @staticmethod
-    def _make_norm_with_mismatched_dates() -> NormaCompleta:
+    def _make_norm_with_mismatched_dates() -> ParsedNorm:
         """Norm where some blocks have dates AFTER the first reform.
 
         Block a1: version at 2000-01-01 (matches first reform)
@@ -740,29 +740,29 @@ class TestBootstrapIncludesAllBlocks:
         ]
 
         reforms = [
-            Reform(fecha=d1, id_norma="SRC-ORIG", bloques_afectados=("a1",)),
-            Reform(fecha=d3, id_norma="SRC-REFORM", bloques_afectados=("a3",)),
+            Reform(date=d1, norm_id="SRC-ORIG", affected_blocks=("a1",)),
+            Reform(date=d3, norm_id="SRC-REFORM", affected_blocks=("a3",)),
         ]
 
-        metadata = NormaMetadata(
-            titulo="Test Law with Mismatched Dates",
-            titulo_corto="Test Law",
-            identificador="TEST-INCLUDE-ALL",
-            pais="es",
-            rango=Rango.LEY,
-            fecha_publicacion=d1,
-            estado=EstadoNorma.VIGENTE,
-            departamento="Test",
-            fuente="https://example.com",
+        metadata = NormMetadata(
+            title="Test Law with Mismatched Dates",
+            short_title="Test Law",
+            identifier="TEST-INCLUDE-ALL",
+            country="es",
+            rank=Rank.LEY,
+            publication_date=d1,
+            status=NormStatus.IN_FORCE,
+            department="Test",
+            source="https://example.com",
         )
 
-        return NormaCompleta(metadata=metadata, bloques=tuple(blocks), reforms=tuple(reforms))
+        return ParsedNorm(metadata=metadata, blocks=tuple(blocks), reforms=tuple(reforms))
 
     def test_bootstrap_includes_all_three_blocks(self, test_config):
         """First commit (bootstrap) must include all 3 blocks, not just a1."""
         norm = self._make_norm_with_mismatched_dates()
         _save_norm(test_config, norm)
-        commit_one(test_config, norm.metadata.pais, norm.metadata.identificador)
+        commit_one(test_config, norm.metadata.country, norm.metadata.identifier)
 
         # Read the FIRST commit's content (bootstrap), not the final state
         result = subprocess.run(
@@ -792,7 +792,7 @@ class TestBootstrapIncludesAllBlocks:
         """Second commit (reform) should change only article 3."""
         norm = self._make_norm_with_mismatched_dates()
         _save_norm(test_config, norm)
-        commits = commit_one(test_config, norm.metadata.pais, norm.metadata.identificador)
+        commits = commit_one(test_config, norm.metadata.country, norm.metadata.identifier)
         assert commits == 2
 
         # Get the markdown at the last commit

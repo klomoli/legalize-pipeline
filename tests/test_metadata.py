@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from legalize.models import EstadoNorma, Rango
+from legalize.models import NormStatus, Rank
 from legalize.fetcher.es.metadata import parse_metadata
 
 # Real XML from the Constitution (captured from the API)
@@ -36,30 +36,30 @@ CONSTITUCION_META_XML = b"""<?xml version="1.0" encoding="utf-8"?>
 class TestParseMetadatos:
     def test_parse_constitucion(self):
         meta = parse_metadata(CONSTITUCION_META_XML, "BOE-A-1978-31229")
-        assert meta.identificador == "BOE-A-1978-31229"
-        assert meta.rango == Rango.CONSTITUCION
-        assert meta.fecha_publicacion == date(1978, 12, 29)
-        assert meta.departamento == "Cortes Generales"
-        assert meta.estado == EstadoNorma.VIGENTE
+        assert meta.identifier == "BOE-A-1978-31229"
+        assert meta.rank == Rank.CONSTITUCION
+        assert meta.publication_date == date(1978, 12, 29)
+        assert meta.department == "Cortes Generales"
+        assert meta.status == NormStatus.IN_FORCE
 
     def test_title(self):
         meta = parse_metadata(CONSTITUCION_META_XML, "BOE-A-1978-31229")
-        assert "Constitucion" in meta.titulo
+        assert "Constitucion" in meta.title
 
     def test_source_url(self):
         meta = parse_metadata(CONSTITUCION_META_XML, "BOE-A-1978-31229")
-        assert meta.fuente.startswith("https://")
+        assert meta.source.startswith("https://")
 
-    def test_rango_from_code(self):
-        """The rango is resolved from code '1070' = Constitution."""
+    def test_rank_from_code(self):
+        """The rank is resolved from code '1070' = Constitution."""
         meta = parse_metadata(CONSTITUCION_META_XML, "BOE-A-1978-31229")
-        assert meta.rango == Rango.CONSTITUCION
+        assert meta.rank == Rank.CONSTITUCION
 
-    def test_derogada_status(self):
-        """estatus_derogacion='T' results in DEROGADA."""
+    def test_repealed_status(self):
+        """estatus_derogacion='T' results in REPEALED."""
         xml = CONSTITUCION_META_XML.replace(
             b"<estatus_derogacion>N</estatus_derogacion>",
             b"<estatus_derogacion>T</estatus_derogacion>",
         )
         meta = parse_metadata(xml, "BOE-A-1978-31229")
-        assert meta.estado == EstadoNorma.DEROGADA
+        assert meta.status == NormStatus.REPEALED

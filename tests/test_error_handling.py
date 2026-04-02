@@ -19,12 +19,12 @@ import requests
 
 from legalize.config import Config, CountryConfig, GitConfig
 from legalize.models import (
-    Bloque,
-    EstadoNorma,
-    NormaCompleta,
-    NormaMetadata,
+    Block,
+    NormMetadata,
+    NormStatus,
     Paragraph,
-    Rango,
+    ParsedNorm,
+    Rank,
     Reform,
     Version,
 )
@@ -40,41 +40,41 @@ from legalize.storage import load_norma_from_json, save_structured_json
 
 def _make_version(source_id: str, d: date, text: str) -> Version:
     return Version(
-        id_norma=source_id,
-        fecha_publicacion=d,
-        fecha_vigencia=d,
+        norm_id=source_id,
+        publication_date=d,
+        effective_date=d,
         paragraphs=(Paragraph(css_class="parrafo", text=text),),
     )
 
 
-def _make_block(block_id: str, titulo: str, versions: list[Version]) -> Bloque:
-    return Bloque(
+def _make_block(block_id: str, title: str, versions: list[Version]) -> Block:
+    return Block(
         id=block_id,
-        tipo="precepto",
-        titulo=titulo,
+        block_type="precepto",
+        title=title,
         versions=tuple(versions),
     )
 
 
-def _make_simple_norm(norm_id: str, title: str) -> NormaCompleta:
+def _make_simple_norm(norm_id: str, title: str) -> ParsedNorm:
     """Create a minimal valid norm for testing."""
     d = date(2024, 1, 1)
     blocks = [
         _make_block("a1", "Articulo 1", [_make_version(norm_id, d, f"Texto de {title}.")]),
     ]
-    reforms = [Reform(fecha=d, id_norma=norm_id, bloques_afectados=("a1",))]
-    metadata = NormaMetadata(
-        titulo=title,
-        titulo_corto=title,
-        identificador=norm_id,
-        pais="es",
-        rango=Rango.LEY,
-        fecha_publicacion=d,
-        estado=EstadoNorma.VIGENTE,
-        departamento="Test",
-        fuente="https://example.com/test",
+    reforms = [Reform(date=d, norm_id=norm_id, affected_blocks=("a1",))]
+    metadata = NormMetadata(
+        title=title,
+        short_title=title,
+        identifier=norm_id,
+        country="es",
+        rank=Rank.LEY,
+        publication_date=d,
+        status=NormStatus.IN_FORCE,
+        department="Test",
+        source="https://example.com/test",
     )
-    return NormaCompleta(metadata=metadata, bloques=tuple(blocks), reforms=tuple(reforms))
+    return ParsedNorm(metadata=metadata, blocks=tuple(blocks), reforms=tuple(reforms))
 
 
 @pytest.fixture
@@ -284,7 +284,7 @@ class TestStorageErrorHandling:
 
         # Verify the saved file can be loaded back
         loaded = load_norma_from_json(result_path)
-        assert loaded.metadata.identificador == "TEST-DIR-CREATE"
+        assert loaded.metadata.identifier == "TEST-DIR-CREATE"
 
 
 # ─────────────────────────────────────────────

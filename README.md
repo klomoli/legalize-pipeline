@@ -8,11 +8,9 @@ The engine behind **[legalize.dev](https://legalize.dev)** -- converts official 
 
 Each law is a file. Each reform is a commit. Every country is a repo.
 
-## What it does
+## How it works
 
-1. **Fetches** legislation from official open data sources (BOE, LEGI, SFSR, and more)
-2. **Parses** XML into structured data (articles, versions, reforms)
-3. **Generates** Markdown files with YAML frontmatter and git commits with historical dates
+![Pipeline diagram](docs/pipeline-diagram.svg)
 
 ## Public repos (output)
 

@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from legalize.config import Config, CountryConfig, GitConfig
-from legalize.models import EstadoNorma, NormaMetadata, Rango
+from legalize.models import NormMetadata, NormStatus, Rank
 from legalize.pipeline import bootstrap_from_local_xml
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
@@ -30,17 +30,17 @@ def bootstrap_config(tmp_path) -> Config:
 
 
 @pytest.fixture
-def constitucion_metadata() -> NormaMetadata:
-    return NormaMetadata(
-        titulo="Constitución Española",
-        titulo_corto="Constitución Española",
-        identificador="BOE-A-1978-31229",
-        pais="es",
-        rango=Rango.CONSTITUCION,
-        fecha_publicacion=date(1978, 12, 29),
-        estado=EstadoNorma.VIGENTE,
-        departamento="Cortes Generales",
-        fuente="https://www.boe.es/eli/es/c/1978/12/27/(1)",
+def constitucion_metadata() -> NormMetadata:
+    return NormMetadata(
+        title="Constitución Española",
+        short_title="Constitución Española",
+        identifier="BOE-A-1978-31229",
+        country="es",
+        rank=Rank.CONSTITUCION,
+        publication_date=date(1978, 12, 29),
+        status=NormStatus.IN_FORCE,
+        department="Cortes Generales",
+        source="https://www.boe.es/eli/es/c/1978/12/27/(1)",
     )
 
 

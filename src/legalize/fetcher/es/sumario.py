@@ -36,7 +36,7 @@ import re
 from lxml import etree
 
 from legalize.fetcher.es.config import ScopeConfig
-from legalize.models import Disposition, Rango
+from legalize.models import Disposition, Rank
 
 logger = logging.getLogger(__name__)
 
@@ -44,17 +44,17 @@ logger = logging.getLogger(__name__)
 _LEGISLATIVE_SECTIONS = {"1", "1A", "T"}  # I. Disposiciones generales, TC
 
 
-def _infer_rango_from_title(title: str) -> Rango | None:
+def _infer_rank_from_title(title: str) -> Rank | None:
     """Infers the normative rank from a disposition's title."""
     lower = title.lower()
     if lower.startswith("ley orgánica") or lower.startswith("ley organica"):
-        return Rango.LEY_ORGANICA
+        return Rank.LEY_ORGANICA
     if lower.startswith("real decreto legislativo"):
-        return Rango.REAL_DECRETO_LEGISLATIVO
+        return Rank.REAL_DECRETO_LEGISLATIVO
     if lower.startswith("real decreto-ley"):
-        return Rango.REAL_DECRETO_LEY
+        return Rank.REAL_DECRETO_LEY
     if re.match(r"^ley \d+/\d{4}", lower):
-        return Rango.LEY
+        return Rank.LEY
     return None
 
 
@@ -131,7 +131,7 @@ def _parse_item(item: etree._Element, department: str, scope: ScopeConfig) -> Di
         return None
 
     # Infer rank from title
-    rank = _infer_rango_from_title(title)
+    rank = _infer_rank_from_title(title)
 
     # Filter by ranks in scope (empty list = accept all)
     if scope.rangos and rank is not None and rank not in scope.rangos:
@@ -144,13 +144,13 @@ def _parse_item(item: etree._Element, department: str, scope: ScopeConfig) -> Di
 
     return Disposition(
         id_boe=id_boe,
-        titulo=title,
-        rango=rank,
-        departamento=department,
+        title=title,
+        rank=rank,
+        department=department,
         url_xml=url_xml,
-        normas_afectadas=tuple(_extract_affected_norms(title)),
-        es_nueva=is_new,
-        es_correccion=is_correction,
+        affected_norms=tuple(_extract_affected_norms(title)),
+        is_new=is_new,
+        is_correction=is_correction,
     )
 
 

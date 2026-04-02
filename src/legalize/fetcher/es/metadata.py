@@ -1,7 +1,7 @@
 """Parser for BOE norm metadata.
 
 Converts the response from endpoint /api/legislacion-consolidada/id/{id}/metadatos
-into a domain NormaMetadata.
+into a domain NormMetadata.
 
 Actual API structure (XML):
     <response>
@@ -31,51 +31,51 @@ from datetime import date
 
 from lxml import etree
 
-from legalize.models import EstadoNorma, NormaMetadata, Rango
+from legalize.models import NormMetadata, NormStatus, Rank
 from legalize.fetcher.es.titulos import get_short_title
 
 logger = logging.getLogger(__name__)
 
 # Mapping of BOE rank texts (case-insensitive) to our enum
-_RANK_TEXT_MAP: dict[str, Rango] = {
-    "constitución": Rango.CONSTITUCION,
-    "constitucion": Rango.CONSTITUCION,
-    "ley orgánica": Rango.LEY_ORGANICA,
-    "ley organica": Rango.LEY_ORGANICA,
-    "ley": Rango.LEY,
-    "real decreto-ley": Rango.REAL_DECRETO_LEY,
-    "real decreto legislativo": Rango.REAL_DECRETO_LEGISLATIVO,
-    "real decreto": Rango.REAL_DECRETO,
-    "orden": Rango.ORDEN,
-    "resolución": Rango.RESOLUCION,
-    "resolucion": Rango.RESOLUCION,
-    "acuerdo internacional": Rango.ACUERDO_INTERNACIONAL,
-    "circular": Rango.CIRCULAR,
-    "instrucción": Rango.INSTRUCCION,
-    "instruccion": Rango.INSTRUCCION,
-    "decreto": Rango.DECRETO,
-    "acuerdo": Rango.ACUERDO,
-    "reglamento": Rango.REGLAMENTO,
-    "decreto-ley": Rango.REAL_DECRETO_LEY,
+_RANK_TEXT_MAP: dict[str, Rank] = {
+    "constitución": Rank.CONSTITUCION,
+    "constitucion": Rank.CONSTITUCION,
+    "ley orgánica": Rank.LEY_ORGANICA,
+    "ley organica": Rank.LEY_ORGANICA,
+    "ley": Rank.LEY,
+    "real decreto-ley": Rank.REAL_DECRETO_LEY,
+    "real decreto legislativo": Rank.REAL_DECRETO_LEGISLATIVO,
+    "real decreto": Rank.REAL_DECRETO,
+    "orden": Rank.ORDEN,
+    "resolución": Rank.RESOLUCION,
+    "resolucion": Rank.RESOLUCION,
+    "acuerdo internacional": Rank.ACUERDO_INTERNACIONAL,
+    "circular": Rank.CIRCULAR,
+    "instrucción": Rank.INSTRUCCION,
+    "instruccion": Rank.INSTRUCCION,
+    "decreto": Rank.DECRETO,
+    "acuerdo": Rank.ACUERDO,
+    "reglamento": Rank.REGLAMENTO,
+    "decreto-ley": Rank.REAL_DECRETO_LEY,
 }
 
 # Mapping of BOE rank codes to our enum
-_RANK_CODE_MAP: dict[str, Rango] = {
-    "1070": Rango.CONSTITUCION,
-    "1010": Rango.LEY_ORGANICA,
-    "1020": Rango.LEY,
-    "1040": Rango.REAL_DECRETO_LEY,
-    "1050": Rango.REAL_DECRETO_LEGISLATIVO,
-    "1290": Rango.LEY_ORGANICA,  # alternate code
-    "1300": Rango.LEY,  # alternate code
-    "1060": Rango.REAL_DECRETO,
-    "1080": Rango.ORDEN,
-    "1130": Rango.RESOLUCION,
-    "1170": Rango.ACUERDO_INTERNACIONAL,
-    "1190": Rango.CIRCULAR,
-    "1200": Rango.INSTRUCCION,
-    "1030": Rango.DECRETO,
-    "1160": Rango.ACUERDO,
+_RANK_CODE_MAP: dict[str, Rank] = {
+    "1070": Rank.CONSTITUCION,
+    "1010": Rank.LEY_ORGANICA,
+    "1020": Rank.LEY,
+    "1040": Rank.REAL_DECRETO_LEY,
+    "1050": Rank.REAL_DECRETO_LEGISLATIVO,
+    "1290": Rank.LEY_ORGANICA,  # alternate code
+    "1300": Rank.LEY,  # alternate code
+    "1060": Rank.REAL_DECRETO,
+    "1080": Rank.ORDEN,
+    "1130": Rank.RESOLUCION,
+    "1170": Rank.ACUERDO_INTERNACIONAL,
+    "1190": Rank.CIRCULAR,
+    "1200": Rank.INSTRUCCION,
+    "1030": Rank.DECRETO,
+    "1160": Rank.ACUERDO,
 }
 
 
@@ -109,7 +109,7 @@ def _parse_date_boe(text: str) -> date | None:
         return None
 
 
-def _parse_rank(meta: etree._Element) -> Rango | None:
+def _parse_rank(meta: etree._Element) -> Rank | None:
     """Resolves the rank from code or text."""
     code = _code_of(meta, "rango")
     if code and code in _RANK_CODE_MAP:
@@ -119,35 +119,35 @@ def _parse_rank(meta: etree._Element) -> Rango | None:
     return _RANK_TEXT_MAP.get(text)
 
 
-def _parse_status(meta: etree._Element) -> EstadoNorma:
+def _parse_status(meta: etree._Element) -> NormStatus:
     """Determines the validity status from BOE flags."""
     repeal_status = _text_of(meta, "estatus_derogacion")
     if repeal_status == "T":
-        return EstadoNorma.DEROGADA
+        return NormStatus.REPEALED
     if repeal_status == "P":
-        return EstadoNorma.PARCIALMENTE_DEROGADA
-    return EstadoNorma.VIGENTE
+        return NormStatus.PARTIALLY_REPEALED
+    return NormStatus.IN_FORCE
 
 
-def _infer_rango_from_title(title: str) -> Rango | None:
+def _infer_rank_from_title(title: str) -> Rank | None:
     """Attempts to infer the rank from the title."""
     lower = title.lower()
     if "constitución" in lower or "constitucion" in lower:
-        return Rango.CONSTITUCION
+        return Rank.CONSTITUCION
     if "ley orgánica" in lower or "ley organica" in lower:
-        return Rango.LEY_ORGANICA
+        return Rank.LEY_ORGANICA
     if "real decreto legislativo" in lower:
-        return Rango.REAL_DECRETO_LEGISLATIVO
+        return Rank.REAL_DECRETO_LEGISLATIVO
     if "real decreto-ley" in lower:
-        return Rango.REAL_DECRETO_LEY
+        return Rank.REAL_DECRETO_LEY
     if lower.startswith("ley "):
-        return Rango.LEY
+        return Rank.LEY
     if "real decreto" in lower and "ley" not in lower and "legislativo" not in lower:
-        return Rango.REAL_DECRETO
+        return Rank.REAL_DECRETO
     if lower.startswith("orden"):
-        return Rango.ORDEN
+        return Rank.ORDEN
     if lower.startswith("resolución") or lower.startswith("resolucion"):
-        return Rango.RESOLUCION
+        return Rank.RESOLUCION
     return None
 
 
@@ -201,7 +201,7 @@ def _extract_jurisdiction(meta: etree._Element) -> str | None:
     return jurisdiction
 
 
-def parse_metadata(xml_data: bytes, id_boe: str) -> NormaMetadata:
+def parse_metadata(xml_data: bytes, id_boe: str) -> NormMetadata:
     """Parses the XML response from the BOE /metadatos endpoint.
 
     Args:
@@ -209,7 +209,7 @@ def parse_metadata(xml_data: bytes, id_boe: str) -> NormaMetadata:
         id_boe: BOE identifier (fallback if not in XML).
 
     Returns:
-        Parsed NormaMetadata.
+        Parsed NormMetadata.
 
     Raises:
         ValueError: If minimum information cannot be extracted.
@@ -228,10 +228,10 @@ def parse_metadata(xml_data: bytes, id_boe: str) -> NormaMetadata:
 
     rank = _parse_rank(meta)
     if rank is None:
-        rank = _infer_rango_from_title(title)
+        rank = _infer_rank_from_title(title)
     if rank is None:
         logger.warning("Unrecognized rank for %s, using OTRO as fallback", id_boe)
-        rank = Rango.OTRO
+        rank = Rank.OTRO
 
     pub_date = _parse_date_boe(_text_of(meta, "fecha_publicacion"))
     if pub_date is None:
@@ -249,16 +249,16 @@ def parse_metadata(xml_data: bytes, id_boe: str) -> NormaMetadata:
     # Detect autonomous community jurisdiction from ELI URL or ambito
     jurisdiction = _extract_jurisdiction(meta)
 
-    return NormaMetadata(
-        titulo=title,
-        titulo_corto=short_title,
-        identificador=identifier,
-        pais="es",
-        rango=rank,
-        fecha_publicacion=pub_date,
-        estado=status,
-        departamento=department,
-        fuente=source_url,
-        jurisdiccion=jurisdiction,
-        fecha_ultima_modificacion=effective_date,
+    return NormMetadata(
+        title=title,
+        short_title=short_title,
+        identifier=identifier,
+        country="es",
+        rank=rank,
+        publication_date=pub_date,
+        status=status,
+        department=department,
+        source=source_url,
+        jurisdiction=jurisdiction,
+        last_modified=effective_date,
     )

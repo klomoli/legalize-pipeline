@@ -145,13 +145,13 @@ def daily(
 
             for disp in dispositions:
                 if dry_run:
-                    console.print(f"    [dim]{disp.id_boe} — {disp.titulo[:60]}...[/dim]")
+                    console.print(f"    [dim]{disp.id_boe} — {disp.title[:60]}...[/dim]")
                     continue
 
                 try:
                     meta_xml = client.get_metadata(disp.id_boe)
                     metadata = parse_metadata(meta_xml, disp.id_boe)
-                    text_xml = client.get_consolidated_text(metadata.identificador)
+                    text_xml = client.get_consolidated_text(metadata.identifier)
                     blocks = parse_text_xml(text_xml)
 
                     file_path = norm_to_filepath(metadata)
@@ -164,14 +164,14 @@ def daily(
                     if not changed:
                         continue
 
-                    if disp.es_correccion:
-                        commit_type = CommitType.CORRECCION
-                    elif disp.es_nueva:
-                        commit_type = CommitType.NUEVA
+                    if disp.is_correction:
+                        commit_type = CommitType.CORRECTION
+                    elif disp.is_new:
+                        commit_type = CommitType.NEW
                     else:
-                        commit_type = CommitType.REFORMA
+                        commit_type = CommitType.REFORM
 
-                    reform = Reform(fecha=current_date, id_norma=disp.id_boe, bloques_afectados=())
+                    reform = Reform(date=current_date, norm_id=disp.id_boe, affected_blocks=())
                     info = build_commit_info(
                         commit_type, metadata, reform, blocks, file_path, markdown
                     )

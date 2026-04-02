@@ -1,6 +1,6 @@
 """Markdown generation from legislative blocks.
 
-Converts the Bloque/Version/Paragraph structure from BOE XML
+Converts the Block/Version/Paragraph structure from BOE XML
 into readable Markdown, with headings reflecting the legal hierarchy.
 """
 
@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Callable
 
-from legalize.models import Bloque, NormaMetadata, Paragraph
+from legalize.models import Block, NormMetadata, Paragraph
 from legalize.transformer.frontmatter import render_frontmatter
 from legalize.transformer.xml_parser import get_block_at_date
 
@@ -88,8 +88,8 @@ def render_paragraphs(paragraphs: list[Paragraph] | tuple[Paragraph, ...]) -> st
 
 
 def render_norm_at_date(
-    metadata: NormaMetadata,
-    blocks: list[Bloque] | tuple[Bloque, ...],
+    metadata: NormMetadata,
+    blocks: list[Block] | tuple[Block, ...],
     target_date: date,
     include_all: bool = False,
 ) -> str:
@@ -114,7 +114,7 @@ def render_norm_at_date(
     parts.append(render_frontmatter(metadata, target_date))
 
     # H1 title (without trailing period)
-    title = metadata.titulo.rstrip(". ").strip()
+    title = metadata.title.rstrip(". ").strip()
     parts.append(f"# {title}\n\n")
 
     # Blocks in effect at the date
@@ -123,7 +123,7 @@ def render_norm_at_date(
 
         # Fallback: if include_all, use the earliest version available
         if version is None and include_all and block.versions:
-            version = min(block.versions, key=lambda v: v.fecha_publicacion)
+            version = min(block.versions, key=lambda v: v.publication_date)
 
         if version is None:
             continue

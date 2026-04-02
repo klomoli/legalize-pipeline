@@ -16,7 +16,7 @@ from rich.logging import RichHandler
 
 from legalize.config import load_config
 from legalize.countries import supported_countries
-from legalize.models import EstadoNorma, NormaMetadata, Rango
+from legalize.models import NormMetadata, NormStatus, Rank
 
 console = Console()
 
@@ -284,16 +284,16 @@ def bootstrap(
     if xml_path and country == "es":
         from legalize.pipeline import bootstrap_from_local_xml
 
-        metadata = NormaMetadata(
-            titulo="Constitución Española",
-            titulo_corto="Constitución Española",
-            identificador="BOE-A-1978-31229",
-            pais="es",
-            rango=Rango.CONSTITUCION,
-            fecha_publicacion=date(1978, 12, 29),
-            estado=EstadoNorma.VIGENTE,
-            departamento="Cortes Generales",
-            fuente="https://www.boe.es/eli/es/c/1978/12/27/(1)",
+        metadata = NormMetadata(
+            title="Constitución Española",
+            short_title="Constitución Española",
+            identifier="BOE-A-1978-31229",
+            country="es",
+            rank=Rank.CONSTITUCION,
+            publication_date=date(1978, 12, 29),
+            status=NormStatus.IN_FORCE,
+            department="Cortes Generales",
+            source="https://www.boe.es/eli/es/c/1978/12/27/(1)",
         )
         bootstrap_from_local_xml(config, metadata, xml_path, dry_run=dry_run)
     else:

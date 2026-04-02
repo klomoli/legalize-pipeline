@@ -17,35 +17,35 @@ from __future__ import annotations
 
 from datetime import date
 
-from legalize.models import EstadoNorma, NormaMetadata
+from legalize.models import NormMetadata, NormStatus
 
 
-def render_frontmatter(metadata: NormaMetadata, version_date: date) -> str:
+def render_frontmatter(metadata: NormMetadata, version_date: date) -> str:
     """Generates the YAML frontmatter block for a norm at a given date."""
-    title = _clean_title(metadata.titulo)
+    clean_title = _clean_title(metadata.title)
 
     lines = [
         "---",
-        f'titulo: "{_escape_yaml(title)}"',
-        f'identificador: "{metadata.identificador}"',
-        f'pais: "{metadata.pais}"',
+        f'titulo: "{_escape_yaml(clean_title)}"',
+        f'identificador: "{metadata.identifier}"',
+        f'pais: "{metadata.country}"',
     ]
 
-    if metadata.jurisdiccion:
-        lines.append(f'jurisdiccion: "{metadata.jurisdiccion}"')
+    if metadata.jurisdiction:
+        lines.append(f'jurisdiccion: "{metadata.jurisdiction}"')
 
     lines.extend(
         [
-            f'rango: "{metadata.rango}"',
-            f'fecha_publicacion: "{metadata.fecha_publicacion.isoformat()}"',
+            f'rango: "{metadata.rank}"',
+            f'fecha_publicacion: "{metadata.publication_date.isoformat()}"',
             f'ultima_actualizacion: "{version_date.isoformat()}"',
-            f'estado: "{metadata.estado.value if isinstance(metadata.estado, EstadoNorma) else metadata.estado}"',
-            f'fuente: "{metadata.fuente}"',
+            f'estado: "{metadata.status.value if isinstance(metadata.status, NormStatus) else metadata.status}"',
+            f'fuente: "{metadata.source}"',
         ]
     )
 
-    if metadata.url_pdf:
-        lines.append(f'url_pdf: "{metadata.url_pdf}"')
+    if metadata.pdf_url:
+        lines.append(f'url_pdf: "{metadata.pdf_url}"')
 
     lines.append("---")
     lines.append("")
