@@ -6,6 +6,7 @@ import logging
 import re
 from collections.abc import Iterator
 from datetime import date
+from email.utils import parsedate_to_datetime
 from xml.etree import ElementTree as ET
 
 from legalize.fetcher.base import LegislativeClient, NormDiscovery
@@ -39,12 +40,30 @@ class GIIDiscovery(NormDiscovery):
     def discover_daily(
         self, client: LegislativeClient, target_date: date, **kwargs
     ) -> Iterator[str]:
-        """GII has no date-based filtering.
+        """Yield slugs of laws modified on or after target_date.
 
-        For daily updates, we would need to re-download the full TOC and compare
-        builddate attributes against cached state. For now, yields nothing.
+        Uses HTTP HEAD requests to check Last-Modified headers on each ZIP.
+        This is expensive (~6900 HEAD requests) so it should be used with
+        a cached slug list and only checked periodically.
+
+        If 'slugs' is passed in kwargs, only those slugs are checked.
+        Otherwise, discovers all slugs first from the TOC.
         """
-        return iter(())
+        assert isinstance(client, GIIClient)
+        slugs = kwargs.get("slugs") or list(self.discover_all(client))
+
+        for slug in slugs:
+            try:
+                headers = client.head_zip(slug)
+                last_mod = headers.get("Last-Modified", "")
+                if not last_mod:
+                    continue
+                mod_date = parsedate_to_datetime(last_mod).date()
+                if mod_date >= target_date:
+                    logger.info("Changed: %s (Last-Modified: %s)", slug, last_mod)
+                    yield slug
+            except Exception:
+                logger.debug("Could not check %s, skipping", slug)
 
     @staticmethod
     def _extract_slug(url: str) -> str | None:

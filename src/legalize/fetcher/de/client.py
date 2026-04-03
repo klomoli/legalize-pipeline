@@ -88,6 +88,18 @@ class GIIClient(LegislativeClient):
         """Fetch the full TOC XML listing all laws."""
         return self._get(GII_TOC)
 
+    def head_zip(self, norm_id: str) -> dict[str, str]:
+        """HEAD request for a law ZIP to check Last-Modified / ETag."""
+        url = f"{self._base_url}/{norm_id}/xml.zip"
+        now = time.monotonic()
+        wait = self._min_interval - (now - self._last_request)
+        if wait > 0:
+            time.sleep(wait)
+        r = self._session.head(url, timeout=self._timeout)
+        self._last_request = time.monotonic()
+        r.raise_for_status()
+        return dict(r.headers)
+
     def close(self) -> None:
         self._session.close()
 
