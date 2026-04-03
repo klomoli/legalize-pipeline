@@ -1,20 +1,18 @@
 {
   "_data": [
     {
-      "_type": "datasets/gov/lrsk/teises_aktai/Dokumentas",
-      "_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "dokumento_id": "TAR.47BB952431DA-K",
       "pavadinimas": "Lietuvos Respublikos Konstitucija",
-      "trumpas_pavadinimas": "",
-      "numeris": "",
+      "alt_pavadinimas": null,
       "rusis": "Konstitucija",
-      "priemimo_data": "1992-10-25",
-      "isigaliojimo_data": "1992-11-02",
-      "galiojimo_pabaigos_data": null,
-      "statusas": "Galiojantis",
-      "institucija": "Tauta",
-      "tar_identifikatorius": "TAR-1992-00001",
-      "eli_identifikatorius": "",
-      "rusis_kodas": "KON"
+      "galioj_busena": "galioja",
+      "priimtas": "1992-10-25",
+      "isigalioja": "1992-11-02",
+      "negalioja": null,
+      "priemusi_inst": "Tauta",
+      "nuoroda": "https://e-tar.lt/portal/lt/legalAct/TAR.47BB952431DA",
+      "tar_kodas": "0921010KONSRG922324",
+      "pakeista": "1996-06-20, 2004-07-13, 2022-04-21"
     }
   ],
   "_page": {

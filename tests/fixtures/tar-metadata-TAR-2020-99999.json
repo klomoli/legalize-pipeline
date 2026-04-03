@@ -1,20 +1,18 @@
 {
   "_data": [
     {
-      "_type": "datasets/gov/lrsk/teises_aktai/Dokumentas",
-      "_id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+      "dokumento_id": "abc12345def67890abc12345def67890",
       "pavadinimas": "Dėl tam tikrų priemonių panaikinimo",
-      "trumpas_pavadinimas": "",
-      "numeris": "XIII-3200",
+      "alt_pavadinimas": null,
       "rusis": "Įstatymas",
-      "priemimo_data": "2020-06-15",
-      "isigaliojimo_data": "2020-07-01",
-      "galiojimo_pabaigos_data": "2023-01-01",
-      "statusas": "Negaliojantis",
-      "institucija": "Seimas",
-      "tar_identifikatorius": "TAR-2020-99999",
-      "eli_identifikatorius": "",
-      "rusis_kodas": "IST"
+      "galioj_busena": "negalioja",
+      "priimtas": "2020-06-15",
+      "isigalioja": "2020-07-01",
+      "negalioja": "2023-01-01",
+      "priemusi_inst": "Lietuvos Respublikos Seimas",
+      "nuoroda": "https://e-tar.lt/portal/lt/legalAct/abc12345def67890abc12345def67890",
+      "tar_kodas": "2020-13200",
+      "pakeista": null
     }
   ],
   "_page": {

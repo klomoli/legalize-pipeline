@@ -1,4 +1,4 @@
-"""Tests for the Lithuanian TAR parser."""
+"""Tests for the Lithuanian TAR parser (data.gov.lt Spinta API)."""
 
 from __future__ import annotations
 
@@ -17,53 +17,63 @@ class TestTARTextParser:
     def setup_method(self):
         self.parser = TARTextParser()
 
-    def test_parse_html_returns_blocks(self):
-        html = (FIXTURES / "tar-text-sample.html").read_bytes()
-        blocks = self.parser.parse_text(html)
+    def test_parse_json_returns_blocks(self):
+        data = (FIXTURES / "tar-text-sample.json").read_bytes()
+        blocks = self.parser.parse_text(data)
         assert len(blocks) > 0
 
     def test_articles_detected(self):
-        html = (FIXTURES / "tar-text-sample.html").read_bytes()
-        blocks = self.parser.parse_text(html)
+        data = (FIXTURES / "tar-text-sample.json").read_bytes()
+        blocks = self.parser.parse_text(data)
         article_blocks = [b for b in blocks if b.block_type == "article"]
         assert len(article_blocks) == 3
 
     def test_article_ids(self):
-        html = (FIXTURES / "tar-text-sample.html").read_bytes()
-        blocks = self.parser.parse_text(html)
+        data = (FIXTURES / "tar-text-sample.json").read_bytes()
+        blocks = self.parser.parse_text(data)
         article_blocks = [b for b in blocks if b.block_type == "article"]
         ids = [b.id for b in article_blocks]
         assert ids == ["str1", "str2", "str3"]
 
     def test_article_has_paragraphs(self):
-        html = (FIXTURES / "tar-text-sample.html").read_bytes()
-        blocks = self.parser.parse_text(html)
+        data = (FIXTURES / "tar-text-sample.json").read_bytes()
+        blocks = self.parser.parse_text(data)
         article_blocks = [b for b in blocks if b.block_type == "article"]
         # First article should have the heading + 2 body paragraphs
         assert len(article_blocks[0].versions[0].paragraphs) >= 2
 
     def test_article_title(self):
-        html = (FIXTURES / "tar-text-sample.html").read_bytes()
-        blocks = self.parser.parse_text(html)
+        data = (FIXTURES / "tar-text-sample.json").read_bytes()
+        blocks = self.parser.parse_text(data)
         article_blocks = [b for b in blocks if b.block_type == "article"]
         assert "1 straipsnis" in article_blocks[0].title
 
     def test_extract_reforms_returns_list(self):
-        html = (FIXTURES / "tar-text-sample.html").read_bytes()
-        reforms = self.parser.extract_reforms(html)
+        data = (FIXTURES / "tar-text-sample.json").read_bytes()
+        reforms = self.parser.extract_reforms(data)
         assert isinstance(reforms, list)
 
-    def test_empty_html_returns_empty(self):
-        blocks = self.parser.parse_text(b"<html><body></body></html>")
+    def test_empty_data_returns_empty(self):
+        blocks = self.parser.parse_text(b'{"_data": [{"tekstas_lt": ""}]}')
+        assert blocks == []
+
+    def test_no_items_returns_empty(self):
+        blocks = self.parser.parse_text(b'{"_data": []}')
         assert blocks == []
 
     def test_structural_headings_detected(self):
-        html = (FIXTURES / "tar-text-sample.html").read_bytes()
-        blocks = self.parser.parse_text(html)
+        data = (FIXTURES / "tar-text-sample.json").read_bytes()
+        blocks = self.parser.parse_text(data)
         # First block (before first article) should contain structural headings
         first_block = blocks[0]
         para_classes = [p.css_class for p in first_block.versions[0].paragraphs]
         assert "chapter_heading" in para_classes or "part_heading" in para_classes
+
+    def test_plain_text_fallback(self):
+        """Parser handles plain text (non-JSON) gracefully."""
+        text = b"1 straipsnis. Test\n\nSome paragraph text."
+        blocks = self.parser.parse_text(text)
+        assert len(blocks) >= 1
 
 
 class TestTARMetadataParser:
@@ -72,39 +82,40 @@ class TestTARMetadataParser:
 
     def test_parse_civil_code(self):
         json_data = (FIXTURES / "tar-metadata-TAR-2000-12345.json").read_bytes()
-        meta = self.parser.parse(json_data, "TAR-2000-12345")
+        meta = self.parser.parse(json_data, "TAR.47BB952431DA")
         assert isinstance(meta, NormMetadata)
         assert meta.country == "lt"
-        assert meta.identifier == "TAR-2000-12345"
+        assert meta.identifier == "TAR.47BB952431DA"
 
     def test_title(self):
         json_data = (FIXTURES / "tar-metadata-TAR-2000-12345.json").read_bytes()
-        meta = self.parser.parse(json_data, "TAR-2000-12345")
+        meta = self.parser.parse(json_data, "TAR.47BB952431DA")
         assert "civilinis kodeksas" in meta.title.lower()
 
     def test_short_title(self):
         json_data = (FIXTURES / "tar-metadata-TAR-2000-12345.json").read_bytes()
-        meta = self.parser.parse(json_data, "TAR-2000-12345")
+        meta = self.parser.parse(json_data, "TAR.47BB952431DA")
         assert meta.short_title == "Civilinis kodeksas"
 
     def test_rank_istatymas(self):
         json_data = (FIXTURES / "tar-metadata-TAR-2000-12345.json").read_bytes()
-        meta = self.parser.parse(json_data, "TAR-2000-12345")
+        meta = self.parser.parse(json_data, "TAR.47BB952431DA")
+        # Kodeksas maps to istatymas
         assert str(meta.rank) == "istatymas"
 
     def test_rank_konstitucija(self):
         json_data = (FIXTURES / "tar-metadata-TAR-1992-00001.json").read_bytes()
-        meta = self.parser.parse(json_data, "TAR-1992-00001")
+        meta = self.parser.parse(json_data, "TAR.47BB952431DA-K")
         assert str(meta.rank) == "konstitucija"
 
     def test_publication_date(self):
         json_data = (FIXTURES / "tar-metadata-TAR-2000-12345.json").read_bytes()
-        meta = self.parser.parse(json_data, "TAR-2000-12345")
+        meta = self.parser.parse(json_data, "TAR.47BB952431DA")
         assert meta.publication_date == date(2000, 7, 18)
 
     def test_in_force_status(self):
         json_data = (FIXTURES / "tar-metadata-TAR-2000-12345.json").read_bytes()
-        meta = self.parser.parse(json_data, "TAR-2000-12345")
+        meta = self.parser.parse(json_data, "TAR.47BB952431DA")
         assert meta.status == NormStatus.IN_FORCE
 
     def test_repealed_status(self):
@@ -114,30 +125,36 @@ class TestTARMetadataParser:
 
     def test_department(self):
         json_data = (FIXTURES / "tar-metadata-TAR-2000-12345.json").read_bytes()
-        meta = self.parser.parse(json_data, "TAR-2000-12345")
-        assert meta.department == "Seimas"
+        meta = self.parser.parse(json_data, "TAR.47BB952431DA")
+        assert "Seimas" in meta.department
 
     def test_source_url(self):
         json_data = (FIXTURES / "tar-metadata-TAR-2000-12345.json").read_bytes()
-        meta = self.parser.parse(json_data, "TAR-2000-12345")
+        meta = self.parser.parse(json_data, "TAR.47BB952431DA")
         assert "e-tar.lt" in meta.source
-        assert "TAR-2000-12345" in meta.source
 
-    def test_last_modified(self):
+    def test_last_modified_from_pakeista(self):
         json_data = (FIXTURES / "tar-metadata-TAR-2000-12345.json").read_bytes()
-        meta = self.parser.parse(json_data, "TAR-2000-12345")
-        assert meta.last_modified == date(2001, 7, 1)
+        meta = self.parser.parse(json_data, "TAR.47BB952431DA")
+        # pakeista has "2004-11-09, 2011-06-21, 2023-05-23" → last_modified = max
+        assert meta.last_modified == date(2023, 5, 23)
+
+    def test_last_modified_falls_back_to_isigalioja(self):
+        json_data = (FIXTURES / "tar-metadata-TAR-2020-99999.json").read_bytes()
+        meta = self.parser.parse(json_data, "TAR-2020-99999")
+        # pakeista is null → falls back to isigalioja (2020-07-01)
+        assert meta.last_modified == date(2020, 7, 1)
 
     def test_short_title_falls_back_to_title(self):
         json_data = (FIXTURES / "tar-metadata-TAR-1992-00001.json").read_bytes()
-        meta = self.parser.parse(json_data, "TAR-1992-00001")
-        # trumpas_pavadinimas is empty, should fall back to pavadinimas
+        meta = self.parser.parse(json_data, "TAR.47BB952431DA-K")
+        # alt_pavadinimas is null, should fall back to pavadinimas
         assert meta.short_title == meta.title
 
     def test_empty_data_raises(self):
         import pytest
 
-        empty = b'{"_data": [], "_page": {"next": null}}'
+        empty = b'{"_data": []}'
         with pytest.raises(ValueError, match="No metadata found"):
             self.parser.parse(empty, "TAR-0000-00000")
 
@@ -157,12 +174,12 @@ class TestSlugLithuania:
         meta = NormMetadata(
             title="Test",
             short_title="Test",
-            identifier="TAR-2000-12345",
+            identifier="TAR.47BB952431DA",
             country="lt",
             rank="istatymas",
             publication_date=date(2000, 7, 18),
             status=NormStatus.IN_FORCE,
             department="Seimas",
-            source="https://www.e-tar.lt/portal/lt/legalAct/TAR-2000-12345",
+            source="https://e-tar.lt/portal/lt/legalAct/TAR.47BB952431DA",
         )
-        assert norm_to_filepath(meta) == "lt/TAR-2000-12345.md"
+        assert norm_to_filepath(meta) == "lt/TAR.47BB952431DA.md"

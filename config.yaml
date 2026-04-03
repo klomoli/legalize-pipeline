@@ -48,7 +48,7 @@ countries:
     cache_dir: ".cache"
     max_workers: 1
     source:
-      base_url: "https://testphase.rechtsinformationen.bund.de/v1"
+      base_url: "https://www.gesetze-im-internet.de"
       request_timeout: 30
       max_retries: 5
       requests_per_second: 2.0
@@ -80,7 +80,6 @@ countries:
     source:
       api_url: "https://get.data.gov.lt"
       dataset: "datasets/gov/lrsk/teises_aktai/Dokumentas"
-      text_base_url: "https://www.e-tar.lt"
       request_timeout: 30
       max_retries: 5
       requests_per_second: 2.0

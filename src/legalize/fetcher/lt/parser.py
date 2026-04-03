@@ -1,7 +1,8 @@
-"""Parser for Lithuanian TAR metadata (JSON) and e-tar.lt text (HTML).
+"""Parser for Lithuanian data.gov.lt metadata (JSON) and text (plain text).
 
-Metadata comes from data.gov.lt Spinta API as JSON.
-Full text comes from e-tar.lt as HTML (consolidated versions).
+Both metadata and full text come from the data.gov.lt Spinta API.
+The tekstas_lt field contains the full law text as plain text with
+newline-separated paragraphs.
 """
 
 from __future__ import annotations
@@ -27,24 +28,23 @@ RUSIS_TO_RANK: dict[str, str] = {
     "Konstitucinis įstatymas": "konstitucinis_istatymas",
     "Įstatymas": "istatymas",
     "Kodeksas": "istatymas",
-    "Vyriausybės nutarimas": "vyriausybes_nutarimas",
-    "Prezidento dekretas": "prezidento_dekretas",
-    "Ministro įsakymas": "ministro_isakymas",
-    "Savivaldybės sprendimas": "savivaldybes_sprendimas",
     "Nutarimas": "nutarimas",
     "Įsakymas": "isakymas",
     "Sprendimas": "sprendimas",
+    "Potvarkis": "potvarkis",
+    "Dekretas": "dekretas",
+    "Rezoliucija": "rezoliucija",
 }
 
-# Map Lithuanian status values to NormStatus
+# Map Lithuanian status values (galioj_busena) to NormStatus
+# Only 3 values exist in the DB: galioja (380K), negalioja (89K), neįsigaliojęs (413)
 STATUS_MAP: dict[str, NormStatus] = {
-    "Galiojantis": NormStatus.IN_FORCE,
-    "galiojantis": NormStatus.IN_FORCE,
-    "Negaliojantis": NormStatus.REPEALED,
-    "negaliojantis": NormStatus.REPEALED,
+    "galioja": NormStatus.IN_FORCE,
+    "negalioja": NormStatus.REPEALED,
+    "neįsigaliojęs": NormStatus.IN_FORCE,  # not yet in force — treat as in_force
 }
 
-# Lithuanian structural element patterns for HTML parsing
+# Lithuanian structural element patterns
 _ARTICLE_RE = re.compile(r"(?P<num>\d+)\s*straipsnis\b", re.IGNORECASE)
 _CHAPTER_RE = re.compile(r"(?P<num>[IVXLCDM]+)\s*(?:skyrius|SKYRIUS)\b", re.IGNORECASE)
 _SECTION_RE = re.compile(r"(?P<num>[IVXLCDM]+|\d+)\s*(?:skirsnis|SKIRSNIS)\b", re.IGNORECASE)
@@ -61,56 +61,66 @@ def _parse_date(s: str | None) -> date | None:
         return None
 
 
-def _strip_html(s: str) -> str:
-    """Remove HTML tags from a string."""
-    return re.sub(r"<[^>]+>", "", s).strip()
+def _classify_line(text: str) -> str:
+    """Classify a text line by Lithuanian structural patterns."""
+    if _ARTICLE_RE.search(text):
+        return "article_heading"
+    if _CHAPTER_RE.search(text):
+        return "chapter_heading"
+    if _SECTION_RE.search(text):
+        return "section_heading"
+    if _PART_RE.search(text):
+        return "part_heading"
+    return "text"
 
 
-def _html_to_paragraphs(html: str) -> list[Paragraph]:
-    """Convert HTML text into a list of Paragraph objects.
+def _text_to_paragraphs(text: str) -> list[Paragraph]:
+    """Convert plain text into a list of Paragraph objects.
 
-    Splits on block-level tags (<p>, <div>, <br>, headings) and
-    classifies each paragraph based on Lithuanian structural patterns.
+    The tekstas_lt field from data.gov.lt is plain text with
+    newline-separated lines (not HTML).
     """
     paragraphs: list[Paragraph] = []
 
-    # Split on block-level elements
-    chunks = re.split(r"<(?:p|div|br|h[1-6])[^>]*>", html, flags=re.IGNORECASE)
-
-    for chunk in chunks:
-        text = _strip_html(chunk).strip()
-        if not text:
+    for line in text.split("\n"):
+        line = line.strip()
+        if not line or line == "\xa0":
             continue
-
-        # Classify the paragraph
-        css_class = "text"
-        if _ARTICLE_RE.search(text):
-            css_class = "article_heading"
-        elif _CHAPTER_RE.search(text):
-            css_class = "chapter_heading"
-        elif _SECTION_RE.search(text):
-            css_class = "section_heading"
-        elif _PART_RE.search(text):
-            css_class = "part_heading"
-
-        paragraphs.append(Paragraph(css_class=css_class, text=text))
+        css_class = _classify_line(line)
+        paragraphs.append(Paragraph(css_class=css_class, text=line))
 
     return paragraphs
 
 
 class TARTextParser(TextParser):
-    """Parses HTML from e-tar.lt into Block objects."""
+    """Parses plain text from data.gov.lt tekstas_lt into Block objects."""
 
     def parse_text(self, data: bytes) -> list[Any]:
-        """Parse e-tar.lt HTML into Block objects.
+        """Parse data.gov.lt JSON response containing tekstas_lt.
 
+        The input is JSON with _data[0].tekstas_lt containing the full text
+        and optionally priimtas (adoption date) for block versioning.
         Groups consecutive paragraphs under article headings into blocks.
-        If no article structure is detected, returns a single block with
-        all content.
         """
-        html = data.decode("utf-8", errors="replace")
-        paragraphs = _html_to_paragraphs(html)
+        raw = data.decode("utf-8", errors="replace")
+        pub_date = date(1900, 1, 1)
 
+        # Handle JSON response from API
+        try:
+            api_data = json.loads(raw)
+            items = api_data.get("_data", [])
+            if not items:
+                return []
+            text = items[0].get("tekstas_lt", "")
+            pub_date = _parse_date(items[0].get("priimtas")) or date(1900, 1, 1)
+        except (json.JSONDecodeError, KeyError, IndexError):
+            # Fall back to treating input as plain text
+            text = raw
+
+        if not text or not text.strip():
+            return []
+
+        paragraphs = _text_to_paragraphs(text)
         if not paragraphs:
             return []
 
@@ -122,10 +132,10 @@ class TARTextParser(TextParser):
 
         for para in paragraphs:
             if para.css_class == "article_heading":
-                # Save previous block if it has content
                 if current_paragraphs:
-                    blocks.append(self._make_block(current_id, current_title, current_paragraphs))
-                # Start new block
+                    blocks.append(
+                        self._make_block(current_id, current_title, current_paragraphs, pub_date)
+                    )
                 match = _ARTICLE_RE.search(para.text)
                 num = match.group("num") if match else str(block_index)
                 current_id = f"str{num}"
@@ -135,27 +145,31 @@ class TARTextParser(TextParser):
             else:
                 current_paragraphs.append(para)
 
-        # Save last block
         if current_paragraphs:
-            blocks.append(self._make_block(current_id, current_title, current_paragraphs))
+            blocks.append(self._make_block(current_id, current_title, current_paragraphs, pub_date))
 
         return blocks
 
     def extract_reforms(self, data: bytes) -> list[Any]:
-        """Extract reform timeline from e-tar.lt HTML.
+        """Extract reform timeline.
 
-        e-TAR provides consolidated text; reform history requires
+        data.gov.lt provides consolidated text; reform history requires
         cross-referencing amendment metadata. Returns empty list for now.
         """
         return []
 
     @staticmethod
-    def _make_block(block_id: str, title: str, paragraphs: list[Paragraph]) -> Block:
+    def _make_block(
+        block_id: str,
+        title: str,
+        paragraphs: list[Paragraph],
+        pub_date: date = date(1900, 1, 1),
+    ) -> Block:
         """Create a Block with a single version from paragraphs."""
         version = Version(
             norm_id=block_id,
-            publication_date=date(1900, 1, 1),
-            effective_date=date(1900, 1, 1),
+            publication_date=pub_date,
+            effective_date=pub_date,
             paragraphs=tuple(paragraphs),
         )
         return Block(
@@ -172,49 +186,71 @@ class TARMetadataParser(MetadataParser):
     def parse(self, data: bytes, norm_id: str) -> NormMetadata:
         """Parse JSON metadata from data.gov.lt.
 
-        Args:
-            data: JSON bytes from the Spinta API response.
-            norm_id: TAR identifier (e.g., "TAR-2000-12345").
+        Real API fields:
+            dokumento_id → identifier
+            pavadinimas → title
+            alt_pavadinimas → short_title (fallback to pavadinimas)
+            rusis → rank (via RUSIS_TO_RANK mapping)
+            galioj_busena → status (via STATUS_MAP)
+            priimtas → publication_date
+            pakeista → last_modified (latest amendment date)
+            isigalioja → last_modified fallback (entry into force)
+            negalioja → used for status inference
+            priemusi_inst → department
+            nuoroda → source URL
         """
         api_data = json.loads(data)
         items = api_data.get("_data", [])
 
         if not items:
-            raise ValueError(f"No metadata found for TAR identifier {norm_id}")
+            raise ValueError(f"No metadata found for dokumento_id {norm_id}")
 
         item = items[0]
 
         title = item.get("pavadinimas", "").strip()
-        short_title = item.get("trumpas_pavadinimas", "").strip() or title
-        tar_id = item.get("tar_identifikatorius", norm_id).strip()
+        short_title = (item.get("alt_pavadinimas") or "").strip() or title
+        doc_id = item.get("dokumento_id", norm_id).strip()
 
         # Rank mapping
         rusis = item.get("rusis", "").strip()
         rank_str = RUSIS_TO_RANK.get(rusis, "kita")
 
         # Dates
-        pub_date = _parse_date(item.get("priemimo_data")) or date(1900, 1, 1)
-        entry_date = _parse_date(item.get("isigaliojimo_data"))
-        expiry_date = _parse_date(item.get("galiojimo_pabaigos_data"))
+        pub_date = _parse_date(item.get("priimtas")) or date(1900, 1, 1)
+        expiry_date = _parse_date(item.get("negalioja"))
 
-        # Status
-        status_raw = item.get("statusas", "").strip()
+        # last_modified: use the latest date from pakeista (amendment dates),
+        # falling back to isigalioja (entry into force date)
+        pakeista = item.get("pakeista") or ""
+        last_mod = None
+        if pakeista:
+            amendment_dates = [_parse_date(d.strip()) for d in pakeista.split(",")]
+            valid_dates = [d for d in amendment_dates if d]
+            if valid_dates:
+                last_mod = max(valid_dates)
+        if not last_mod:
+            last_mod = _parse_date(item.get("isigalioja"))
+
+        # Status from galioj_busena
+        status_raw = item.get("galioj_busena", "").strip()
         status = STATUS_MAP.get(status_raw, NormStatus.IN_FORCE)
         if expiry_date and not status_raw:
             status = NormStatus.REPEALED
 
-        institution = item.get("institucija", "").strip()
-        source_url = f"https://www.e-tar.lt/portal/lt/legalAct/{tar_id}"
+        institution = item.get("priemusi_inst", "").strip()
+        source_url = item.get("nuoroda", "").strip()
+        if not source_url:
+            source_url = f"https://e-tar.lt/portal/lt/legalAct/{doc_id}"
 
         return NormMetadata(
             title=title,
             short_title=short_title,
-            identifier=tar_id,
+            identifier=doc_id,
             country="lt",
             rank=Rank(rank_str),
             publication_date=pub_date,
             status=status,
             department=institution,
             source=source_url,
-            last_modified=entry_date,
+            last_modified=last_mod,
         )

@@ -1,7 +1,8 @@
-"""Lithuania TAR / data.gov.lt HTTP client.
+"""Lithuania data.gov.lt Spinta API client.
 
-Metadata source: https://get.data.gov.lt (Spinta API, UAPI spec)
-Text source: https://www.e-tar.lt (Register of Legal Acts)
+Single source: https://get.data.gov.lt (Spinta API, UAPI spec)
+All data (metadata + full text via tekstas_lt) comes from data.gov.lt.
+e-tar.lt is only used for source URLs, not for fetching.
 License: Open data (Creative Commons)
 """
 
@@ -22,18 +23,26 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_API_URL = "https://get.data.gov.lt"
 DEFAULT_DATASET = "datasets/gov/lrsk/teises_aktai/Dokumentas"
-DEFAULT_TEXT_BASE_URL = "https://www.e-tar.lt"
 DEFAULT_TIMEOUT = 30
 DEFAULT_MAX_RETRIES = 5
 DEFAULT_RATE_LIMIT = 2.0  # requests per second
 
+# Fields needed for metadata
+_META_FIELDS = (
+    "dokumento_id,pavadinimas,alt_pavadinimas,rusis,galioj_busena,"
+    "priimtas,isigalioja,negalioja,priemusi_inst,nuoroda,tar_kodas,pakeista"
+)
+
+# Fields needed for discovery
+_DISCOVERY_FIELDS = "dokumento_id,rusis,galioj_busena,priimtas,pavadinimas"
+
 
 class TARClient(LegislativeClient):
-    """HTTP client for Lithuanian legislation.
+    """HTTP client for Lithuanian legislation via data.gov.lt Spinta API.
 
-    Dual-source approach:
-    - data.gov.lt Spinta API for metadata and discovery
-    - e-tar.lt for consolidated law text (HTML)
+    Single-source: both metadata and full text (tekstas_lt field)
+    come from the same API. e-tar.lt has Cloudflare protection and
+    is not used for fetching.
     """
 
     @classmethod
@@ -43,7 +52,6 @@ class TARClient(LegislativeClient):
         return cls(
             api_url=source.get("api_url", DEFAULT_API_URL),
             dataset=source.get("dataset", DEFAULT_DATASET),
-            text_base_url=source.get("text_base_url", DEFAULT_TEXT_BASE_URL),
             timeout=source.get("request_timeout", DEFAULT_TIMEOUT),
             max_retries=source.get("max_retries", DEFAULT_MAX_RETRIES),
             requests_per_second=source.get("requests_per_second", DEFAULT_RATE_LIMIT),
@@ -53,14 +61,12 @@ class TARClient(LegislativeClient):
         self,
         api_url: str = DEFAULT_API_URL,
         dataset: str = DEFAULT_DATASET,
-        text_base_url: str = DEFAULT_TEXT_BASE_URL,
         timeout: int = DEFAULT_TIMEOUT,
         max_retries: int = DEFAULT_MAX_RETRIES,
         requests_per_second: float = DEFAULT_RATE_LIMIT,
     ) -> None:
         self._api_url = api_url.rstrip("/")
         self._dataset = dataset
-        self._text_base_url = text_base_url.rstrip("/")
         self._timeout = timeout
         self._max_retries = max_retries
         self._delay = 1.0 / requests_per_second
@@ -68,30 +74,34 @@ class TARClient(LegislativeClient):
         self._session.headers.update({"User-Agent": "legalize-bot/1.0"})
 
     def get_text(self, norm_id: str) -> bytes:
-        """Fetch consolidated HTML text from e-tar.lt.
+        """Fetch full text from data.gov.lt via the tekstas_lt field.
 
         Args:
-            norm_id: TAR identifier (e.g., "TAR-2000-12345")
+            norm_id: Document ID (dokumento_id), e.g. "TAR.47BB952431DA"
 
         Returns:
-            HTML bytes of the consolidated version.
+            Text content as UTF-8 bytes (plain text, not HTML).
         """
-        url = f"{self._text_base_url}/portal/lt/legalAct/{norm_id}/asr"
+        url = (
+            f"{self._api_url}/{self._dataset}"
+            f'?dokumento_id="{norm_id}"&select(tekstas_lt,priimtas)&limit(1)'
+        )
         return self._fetch_with_retry(url)
 
     def get_metadata(self, norm_id: str) -> bytes:
         """Fetch metadata JSON from data.gov.lt Spinta API.
 
         Args:
-            norm_id: TAR identifier (e.g., "TAR-2000-12345")
+            norm_id: Document ID (dokumento_id), e.g. "TAR.47BB952431DA"
 
         Returns:
             JSON bytes with document metadata.
         """
-        url = f"{self._api_url}/{self._dataset}"
-        params = f"select(pavadinimas,trumpas_pavadinimas,numeris,rusis,priemimo_data,isigaliojimo_data,galiojimo_pabaigos_data,statusas,institucija,tar_identifikatorius,eli_identifikatorius,rusis_kodas)&tar_identifikatorius={norm_id}&limit(1)"
-        full_url = f"{url}?{params}"
-        return self._fetch_with_retry(full_url)
+        url = (
+            f"{self._api_url}/{self._dataset}"
+            f'?dokumento_id="{norm_id}"&select({_META_FIELDS})&limit(1)'
+        )
+        return self._fetch_with_retry(url)
 
     def get_page(self, page_size: int = 100, cursor: str | None = None) -> bytes:
         """Fetch a page of documents from the Spinta API.
@@ -103,12 +113,35 @@ class TARClient(LegislativeClient):
         Returns:
             JSON bytes with _data array and _page.next cursor.
         """
-        url = f"{self._api_url}/{self._dataset}"
-        params = f"select(tar_identifikatorius,rusis,statusas,priemimo_data,pavadinimas)&sort(tar_identifikatorius)&limit({page_size})"
+        url = (
+            f"{self._api_url}/{self._dataset}"
+            f"?select({_DISCOVERY_FIELDS})&sort(dokumento_id)&limit({page_size})"
+        )
         if cursor:
-            params += f"&_page.next={cursor}"
-        full_url = f"{url}?{params}"
-        return self._fetch_with_retry(full_url)
+            url += f'&page("{cursor}")'
+        return self._fetch_with_retry(url)
+
+    def get_page_by_date(
+        self, target_date: str, page_size: int = 100, cursor: str | None = None
+    ) -> bytes:
+        """Fetch documents adopted on a specific date (server-side filter).
+
+        Args:
+            target_date: ISO date string (YYYY-MM-DD).
+            page_size: Number of results per page.
+            cursor: Cursor token for pagination.
+
+        Returns:
+            JSON bytes with _data array and _page.next cursor.
+        """
+        url = (
+            f"{self._api_url}/{self._dataset}"
+            f'?priimtas="{target_date}"'
+            f"&select({_DISCOVERY_FIELDS})&sort(dokumento_id)&limit({page_size})"
+        )
+        if cursor:
+            url += f'&page("{cursor}")'
+        return self._fetch_with_retry(url)
 
     def close(self) -> None:
         self._session.close()
