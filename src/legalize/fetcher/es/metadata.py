@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 
 # Mapping of BOE rank texts (case-insensitive) to our enum
 _RANK_TEXT_MAP: dict[str, Rank] = {
+    # State-level
     "constitución": Rank.CONSTITUCION,
     "constitucion": Rank.CONSTITUCION,
     "ley orgánica": Rank.LEY_ORGANICA,
@@ -56,26 +57,37 @@ _RANK_TEXT_MAP: dict[str, Rank] = {
     "decreto": Rank.DECRETO,
     "acuerdo": Rank.ACUERDO,
     "reglamento": Rank.REGLAMENTO,
-    "decreto-ley": Rank.REAL_DECRETO_LEY,
+    # Autonomous communities (foral/regional)
+    "ley foral": Rank.LEY_FORAL,
+    "decreto legislativo": Rank.DECRETO_LEGISLATIVO,
+    "decreto-ley": Rank.DECRETO_LEY,
+    "decreto-ley foral": Rank.DECRETO_LEY_FORAL,
+    "decreto foral legislativo": Rank.DECRETO_FORAL_LEGISLATIVO,
 }
 
-# Mapping of BOE rank codes to our enum
+# Mapping of BOE rank codes to our enum.
+# Current codes as of 2026 — the BOE has reassigned some legacy codes.
 _RANK_CODE_MAP: dict[str, Rank] = {
+    # State-level
     "1070": Rank.CONSTITUCION,
-    "1010": Rank.LEY_ORGANICA,
-    "1020": Rank.LEY,
-    "1040": Rank.REAL_DECRETO_LEY,
-    "1050": Rank.REAL_DECRETO_LEGISLATIVO,
-    "1290": Rank.LEY_ORGANICA,  # alternate code
-    "1300": Rank.LEY,  # alternate code
-    "1060": Rank.REAL_DECRETO,
-    "1080": Rank.ORDEN,
-    "1130": Rank.RESOLUCION,
-    "1170": Rank.ACUERDO_INTERNACIONAL,
-    "1190": Rank.CIRCULAR,
-    "1200": Rank.INSTRUCCION,
-    "1030": Rank.DECRETO,
-    "1160": Rank.ACUERDO,
+    "1290": Rank.LEY_ORGANICA,
+    "1300": Rank.LEY,
+    "1310": Rank.REAL_DECRETO_LEGISLATIVO,
+    "1320": Rank.REAL_DECRETO_LEY,
+    "1340": Rank.REAL_DECRETO,
+    "1350": Rank.ORDEN,
+    "1370": Rank.RESOLUCION,
+    "1180": Rank.ACUERDO_INTERNACIONAL,
+    "1390": Rank.CIRCULAR,
+    "1410": Rank.INSTRUCCION,
+    "1510": Rank.DECRETO,
+    "1020": Rank.ACUERDO,
+    # Autonomous communities (foral/regional)
+    "1450": Rank.LEY_FORAL,
+    "1470": Rank.DECRETO_LEGISLATIVO,
+    "1500": Rank.DECRETO_LEY,
+    "1325": Rank.DECRETO_LEY_FORAL,
+    "1480": Rank.DECRETO_FORAL_LEGISLATIVO,
 }
 
 
@@ -120,12 +132,27 @@ def _parse_rank(meta: etree._Element) -> Rank | None:
 
 
 def _parse_status(meta: etree._Element) -> NormStatus:
-    """Determines the validity status from BOE flags."""
+    """Determines the validity status from BOE flags.
+
+    BOE field values (all are S/N):
+    - estatus_derogacion: S=repealed, N=not repealed
+    - estatus_anulacion: S=judicially annulled, N=not annulled
+    - vigencia_agotada: S=validity exhausted (temporary norms), N=still valid
+    """
     repeal_status = _text_of(meta, "estatus_derogacion")
-    if repeal_status == "T":
+    if repeal_status in ("T", "S"):
         return NormStatus.REPEALED
     if repeal_status == "P":
         return NormStatus.PARTIALLY_REPEALED
+
+    annulment = _text_of(meta, "estatus_anulacion")
+    if annulment == "S":
+        return NormStatus.ANNULLED
+
+    exhausted = _text_of(meta, "vigencia_agotada")
+    if exhausted == "S":
+        return NormStatus.EXPIRED
+
     return NormStatus.IN_FORCE
 
 
@@ -138,8 +165,18 @@ def _infer_rank_from_title(title: str) -> Rank | None:
         return Rank.LEY_ORGANICA
     if "real decreto legislativo" in lower:
         return Rank.REAL_DECRETO_LEGISLATIVO
+    if "decreto foral legislativo" in lower:
+        return Rank.DECRETO_FORAL_LEGISLATIVO
+    if "decreto legislativo" in lower:
+        return Rank.DECRETO_LEGISLATIVO
     if "real decreto-ley" in lower:
         return Rank.REAL_DECRETO_LEY
+    if "decreto-ley foral" in lower:
+        return Rank.DECRETO_LEY_FORAL
+    if "decreto-ley" in lower:
+        return Rank.DECRETO_LEY
+    if "ley foral" in lower:
+        return Rank.LEY_FORAL
     if lower.startswith("ley "):
         return Rank.LEY
     if "real decreto" in lower and "ley" not in lower and "legislativo" not in lower:
@@ -249,6 +286,45 @@ def parse_metadata(xml_data: bytes, id_boe: str) -> NormMetadata:
     # Detect autonomous community jurisdiction from ELI URL or ambito
     jurisdiction = _extract_jurisdiction(meta)
 
+    # Extra fields: all available BOE metadata not captured in core fields
+    extra: list[tuple[str, str]] = []
+
+    official_number = _text_of(meta, "numero_oficial")
+    if official_number:
+        extra.append(("official_number", official_number))
+
+    enactment_date = _parse_date_boe(_text_of(meta, "fecha_disposicion"))
+    if enactment_date:
+        extra.append(("enactment_date", enactment_date.isoformat()))
+
+    journal = _text_of(meta, "diario")
+    if journal:
+        extra.append(("official_journal", journal))
+
+    journal_issue = _text_of(meta, "diario_numero")
+    if journal_issue:
+        extra.append(("journal_issue", journal_issue))
+
+    repeal_date = _parse_date_boe(_text_of(meta, "fecha_derogacion"))
+    if repeal_date:
+        extra.append(("repeal_date", repeal_date.isoformat()))
+
+    annulment = _text_of(meta, "estatus_anulacion")
+    if annulment and annulment != "N":
+        extra.append(("annulment_status", annulment))
+
+    validity_exhausted = _text_of(meta, "vigencia_agotada")
+    if validity_exhausted and validity_exhausted != "N":
+        extra.append(("validity_exhausted", validity_exhausted))
+
+    consolidation = _text_of(meta, "estado_consolidacion")
+    if consolidation:
+        extra.append(("consolidation_status", consolidation))
+
+    scope = _text_of(meta, "ambito")
+    if scope:
+        extra.append(("scope", scope))
+
     return NormMetadata(
         title=title,
         short_title=short_title,
@@ -261,4 +337,5 @@ def parse_metadata(xml_data: bytes, id_boe: str) -> NormMetadata:
         source=source_url,
         jurisdiction=jurisdiction,
         last_modified=effective_date,
+        extra=tuple(extra),
     )

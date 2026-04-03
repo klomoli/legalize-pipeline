@@ -31,7 +31,7 @@ class Rank(str):
     # Predefined constants for autocompletion and consistency.
     # Not restrictive — any string is valid as a Rank.
 
-    # Spain
+    # Spain — state level
     CONSTITUCION = "constitucion"
     LEY_ORGANICA = "ley_organica"
     LEY = "ley"
@@ -46,6 +46,13 @@ class Rank(str):
     DECRETO = "decreto"
     ACUERDO = "acuerdo"
     REGLAMENTO = "reglamento"
+
+    # Spain — autonomous communities (foral/regional equivalents)
+    LEY_FORAL = "ley_foral"
+    DECRETO_LEGISLATIVO = "decreto_legislativo"
+    DECRETO_LEY_FORAL = "decreto_ley_foral"
+    DECRETO_FORAL_LEGISLATIVO = "decreto_foral_legislativo"
+    DECRETO_LEY = "decreto_ley"
 
     # France
     CODE = "code"
@@ -75,6 +82,8 @@ class NormStatus(str, Enum):
     IN_FORCE = "in_force"
     REPEALED = "repealed"
     PARTIALLY_REPEALED = "partially_repealed"
+    ANNULLED = "annulled"
+    EXPIRED = "expired"
 
 
 # ─────────────────────────────────────────────
