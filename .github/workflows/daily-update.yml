@@ -19,6 +19,10 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        country: ${{ fromJson(inputs.country && format('["{0}"]', inputs.country) || '["es","fr"]') }}
     steps:
       - uses: actions/checkout@v4
 
@@ -30,8 +34,8 @@ jobs:
 
       - uses: actions/checkout@v4
         with:
-          repository: legalize-dev/legalize-${{ inputs.country || 'es' }}
-          path: repos/${{ inputs.country || 'es' }}
+          repository: legalize-dev/legalize-${{ matrix.country }}
+          path: repos/${{ matrix.country }}
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
 
@@ -44,9 +48,8 @@ jobs:
 
       - name: Run daily pipeline
         run: |
-          COUNTRY="${{ inputs.country || 'es' }}"
           DATE_FLAG=""
           if [ -n "${{ inputs.date }}" ]; then
             DATE_FLAG="--date ${{ inputs.date }}"
           fi
-          legalize daily -c "$COUNTRY" --repo-path "repos/$COUNTRY" $DATE_FLAG --push
+          legalize daily -c "${{ matrix.country }}" --repo-path "repos/${{ matrix.country }}" $DATE_FLAG --push
