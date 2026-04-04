@@ -108,6 +108,69 @@ class TestGIITextParser:
         blocks = self.parser.parse_text(xml)
         assert blocks == []
 
+    def test_dl_list_parsed_as_list_items(self):
+        """DL/DT/DD inside P produces list_item paragraphs."""
+        xml = b"""<dokumente builddate="20250101" doknr="TEST">
+        <norm><metadaten><jurabk>T</jurabk></metadaten></norm>
+        <norm doknr="T01"><metadaten><jurabk>T</jurabk><enbez>P 1</enbez></metadaten>
+        <textdaten><text format="XML"><Content>
+          <P>Intro: <DL Font="normal" Type="arabic">
+            <DT>1.</DT><DD Font="normal"><LA>first item,</LA></DD>
+            <DT>2.</DT><DD Font="normal"><LA>second item.</LA></DD>
+          </DL></P>
+        </Content></text></textdaten></norm></dokumente>"""
+        blocks = self.parser.parse_text(xml)
+        paras = blocks[0].versions[0].paragraphs
+        classes = [p.css_class for p in paras]
+        assert "list_item" in classes
+        items = [p for p in paras if p.css_class == "list_item"]
+        assert len(items) == 2
+        assert "1." in items[0].text
+        assert "first item" in items[0].text
+
+    def test_nested_dl_sub_items(self):
+        """Nested DL (a, b, c inside 1.) produces sub-item paragraphs."""
+        xml = b"""<dokumente builddate="20250101" doknr="TEST">
+        <norm><metadaten><jurabk>T</jurabk></metadaten></norm>
+        <norm doknr="T01"><metadaten><jurabk>T</jurabk><enbez>P 1</enbez></metadaten>
+        <textdaten><text format="XML"><Content>
+          <P><DL Type="arabic">
+            <DT>1.</DT><DD><LA>main item <DL Type="alpha">
+              <DT>a)</DT><DD><LA>sub a,</LA></DD>
+              <DT>b)</DT><DD><LA>sub b.</LA></DD>
+            </DL></LA></DD>
+          </DL></P>
+        </Content></text></textdaten></norm></dokumente>"""
+        blocks = self.parser.parse_text(xml)
+        items = [p for p in blocks[0].versions[0].paragraphs if p.css_class == "list_item"]
+        assert len(items) == 3  # 1. + a) + b)
+        assert "a)" in items[1].text
+        assert "b)" in items[2].text
+
+    def test_inline_sp_italic(self):
+        """SP tags render as italic markdown."""
+        xml = b"""<dokumente builddate="20250101" doknr="TEST">
+        <norm><metadaten><jurabk>T</jurabk></metadaten></norm>
+        <norm doknr="T01"><metadaten><jurabk>T</jurabk><enbez>P 1</enbez></metadaten>
+        <textdaten><text format="XML"><Content>
+          <P>Text with <SP>emphasis</SP> here.</P>
+        </Content></text></textdaten></norm></dokumente>"""
+        blocks = self.parser.parse_text(xml)
+        paras = [p for p in blocks[0].versions[0].paragraphs if p.css_class == "abs"]
+        assert any("*emphasis*" in p.text for p in paras)
+
+    def test_inline_bold(self):
+        """B tags render as bold markdown."""
+        xml = b"""<dokumente builddate="20250101" doknr="TEST">
+        <norm><metadaten><jurabk>T</jurabk></metadaten></norm>
+        <norm doknr="T01"><metadaten><jurabk>T</jurabk><enbez>P 1</enbez></metadaten>
+        <textdaten><text format="XML"><Content>
+          <P>Text with <B>bold</B> word.</P>
+        </Content></text></textdaten></norm></dokumente>"""
+        blocks = self.parser.parse_text(xml)
+        paras = [p for p in blocks[0].versions[0].paragraphs if p.css_class == "abs"]
+        assert any("**bold**" in p.text for p in paras)
+
 
 class TestGIIMetadataParser:
     def setup_method(self):
