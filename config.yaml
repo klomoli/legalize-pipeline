@@ -80,6 +80,7 @@ countries:
     source:
       api_url: "https://get.data.gov.lt"
       dataset: "datasets/gov/lrsk/teises_aktai/Dokumentas"
+      suvestine_dataset: "datasets/gov/lrsk/teises_aktai/Suvestine"
       request_timeout: 30
       max_retries: 5
       requests_per_second: 2.0

@@ -7,7 +7,7 @@ from pathlib import Path
 
 from legalize.countries import get_metadata_parser, get_text_parser
 from legalize.fetcher.lt.parser import TARMetadataParser, TARTextParser
-from legalize.models import NormMetadata, NormStatus
+from legalize.models import NormMetadata, NormStatus, Reform
 from legalize.transformer.slug import norm_to_filepath
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -157,6 +157,70 @@ class TestTARMetadataParser:
         empty = b'{"_data": []}'
         with pytest.raises(ValueError, match="No metadata found"):
             self.parser.parse(empty, "TAR-0000-00000")
+
+
+class TestSuvestine:
+    """Tests for parse_suvestine() — historical version parsing."""
+
+    def setup_method(self):
+        self.parser = TARTextParser()
+        self.data = (FIXTURES / "tar-suvestine-sample.json").read_bytes()
+
+    def test_returns_blocks_and_reforms(self):
+        blocks, reforms = self.parser.parse_suvestine(self.data, "TAR.TEST")
+        assert len(blocks) > 0
+        assert len(reforms) > 0
+
+    def test_three_reforms_from_three_versions(self):
+        _, reforms = self.parser.parse_suvestine(self.data, "TAR.TEST")
+        assert len(reforms) == 3
+
+    def test_reform_dates(self):
+        _, reforms = self.parser.parse_suvestine(self.data, "TAR.TEST")
+        assert reforms[0].date == date(2000, 7, 18)
+        assert reforms[1].date == date(2005, 3, 15)
+        assert reforms[2].date == date(2010, 1, 1)
+
+    def test_reform_norm_ids(self):
+        _, reforms = self.parser.parse_suvestine(self.data, "TAR.TEST")
+        assert reforms[0].norm_id == "TAR.TEST:V001"
+        assert reforms[1].norm_id == "TAR.TEST:V002"
+
+    def test_first_reform_is_bootstrap(self):
+        _, reforms = self.parser.parse_suvestine(self.data, "TAR.TEST")
+        # First reform should have all blocks as affected
+        assert len(reforms[0].affected_blocks) > 0
+
+    def test_blocks_have_multiple_versions(self):
+        blocks, _ = self.parser.parse_suvestine(self.data, "TAR.TEST")
+        # Article 1 (str1) should have 3 versions (changed in V2)
+        art1 = [b for b in blocks if b.id == "str1"]
+        assert len(art1) == 1
+        assert len(art1[0].versions) == 3
+
+    def test_article_detection(self):
+        blocks, _ = self.parser.parse_suvestine(self.data, "TAR.TEST")
+        article_blocks = [b for b in blocks if b.block_type == "article"]
+        assert len(article_blocks) == 3  # 3 straipsnis in the fixture
+
+    def test_second_reform_detects_changed_blocks(self):
+        _, reforms = self.parser.parse_suvestine(self.data, "TAR.TEST")
+        # V2 changed article 1 text (added "ir su jais susijusius...")
+        assert "str1" in reforms[1].affected_blocks
+
+    def test_unchanged_block_not_in_affected(self):
+        _, reforms = self.parser.parse_suvestine(self.data, "TAR.TEST")
+        # Article 3 didn't change between V1 and V2
+        assert "str3" not in reforms[1].affected_blocks
+
+    def test_empty_data_returns_empty(self):
+        blocks, reforms = self.parser.parse_suvestine(b'{"_data": []}', "TAR.X")
+        assert blocks == []
+        assert reforms == []
+
+    def test_reform_is_reform_type(self):
+        _, reforms = self.parser.parse_suvestine(self.data, "TAR.TEST")
+        assert all(isinstance(r, Reform) for r in reforms)
 
 
 class TestCountriesDispatchLT:

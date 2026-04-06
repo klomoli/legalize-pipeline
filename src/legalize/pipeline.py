@@ -269,6 +269,21 @@ def generic_fetch_one(
             blocks = text_parser.parse_text(text_data)
             reforms = _extract_reforms_generic(text_parser, client, norm_id, blocks)
 
+            # Suvestine: replace blocks + reforms with versioned historical data
+            if hasattr(text_parser, "parse_suvestine") and hasattr(client, "get_suvestine"):
+                try:
+                    suvestine_data = client.get_suvestine(norm_id)
+                    sv_blocks, sv_reforms = text_parser.parse_suvestine(suvestine_data, norm_id)
+                    if sv_reforms:
+                        blocks = sv_blocks
+                        reforms = sv_reforms
+                        console.print(f"    [dim]Suvestine: {len(sv_reforms)} versions[/dim]")
+                except Exception:
+                    logger.warning(
+                        "Suvestine unavailable for %s, using consolidated text",
+                        norm_id,
+                    )
+
             norm = ParsedNorm(
                 metadata=metadata,
                 blocks=tuple(blocks),

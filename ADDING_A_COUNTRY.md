@@ -515,7 +515,7 @@ Different countries provide different levels of historical data:
 | Strategy | Example | What you get |
 |----------|---------|-------------|
 | **Embedded versions** | Spain (BOE), France (LEGI) | Full text at every point in time. Best case. |
-| **Amendment register** | Sweden (SFSR) | Timeline of which sections changed when, but only current text. |
+| **Amendment register** | Sweden (SFSR) | Timeline of which sections changed when, but only current text. Dates are approximate (Jan 1 of the SFS year) — multiple reforms per year share the same date. |
 | **Snapshots over time** | Germany (gesetze-im-internet) | Only current text. Build history by re-downloading periodically. |
 | **Point-in-time API** | UK (legislation.gov.uk) | Request any law at any date via URL parameter. |
 

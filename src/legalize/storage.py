@@ -161,6 +161,7 @@ def _norm_to_dict(norm: ParsedNorm) -> dict:
                 "date": reform.date.isoformat(),
                 "source_id": reform.norm_id,
                 "articles_affected": affected,
+                "affected_block_ids": list(reform.affected_blocks),
             }
         )
 
@@ -242,16 +243,22 @@ def load_norma_from_json(json_path: Path) -> ParsedNorm:
 
     reforms = []
     for r in data["reforms"]:
+        # Prefer explicit block IDs (Suvestine-aware) over source_id matching
+        if "affected_block_ids" in r:
+            affected = tuple(r["affected_block_ids"])
+        else:
+            # Legacy: reconstruct from version source_id matching
+            affected = tuple(
+                art["block_id"]
+                for art in data["articles"]
+                for v in art["versions"]
+                if v["source_id"] == r["source_id"] and v["date"] == r["date"]
+            )
         reforms.append(
             Reform(
                 date=date.fromisoformat(r["date"]),
                 norm_id=r["source_id"],
-                affected_blocks=tuple(
-                    art["block_id"]
-                    for art in data["articles"]
-                    for v in art["versions"]
-                    if v["source_id"] == r["source_id"] and v["date"] == r["date"]
-                ),
+                affected_blocks=affected,
             )
         )
 

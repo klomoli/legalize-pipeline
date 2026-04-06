@@ -19,6 +19,7 @@ from legalize.models import (
     NormStatus,
     Paragraph,
     Rank,
+    Reform,
     Version,
 )
 
@@ -124,6 +125,135 @@ class TARTextParser(TextParser):
         if not paragraphs:
             return []
 
+        return self._parse_paragraphs_to_blocks(paragraphs, pub_date)
+
+    def extract_reforms(self, data: bytes) -> list[Any]:
+        """Extract reform timeline from Dokumentas text.
+
+        Dokumentas only has the current consolidated text, so this returns
+        an empty list. Use parse_suvestine() for historical versions.
+        """
+        return []
+
+    def parse_suvestine(
+        self, suvestine_data: bytes, norm_id: str
+    ) -> tuple[list[Block], list[Reform]]:
+        """Parse Suvestine (historical versions) into versioned Blocks + Reforms.
+
+        Each Suvestine entry is a full snapshot of the law at a point in time.
+        We parse each snapshot into blocks, then merge blocks across versions
+        so each Block has multiple Version objects (one per Suvestine entry).
+
+        Returns (blocks, reforms) where blocks have multi-version content
+        and reforms is the chronological list of changes.
+        """
+        raw = json.loads(suvestine_data)
+        items = raw.get("_data", [])
+        if not items:
+            return [], []
+
+        # Parse each version's text into blocks
+        snapshots: list[tuple[date, str, list[Block]]] = []
+        for item in items:
+            version_date = _parse_date(item.get("galioja_nuo"))
+            if not version_date:
+                continue
+            version_id = item.get("suvestines_id", "")
+            text = item.get("tekstas_lt", "")
+            if not text or not text.strip():
+                continue
+
+            paragraphs = _text_to_paragraphs(text)
+            if not paragraphs:
+                continue
+
+            # Reuse the same block-building logic
+            blocks = self._parse_paragraphs_to_blocks(paragraphs, version_date)
+            snapshots.append((version_date, version_id, blocks))
+
+        if not snapshots:
+            return [], []
+
+        # Build merged blocks: collect all block IDs across versions
+        # and create one Block per ID with multiple Versions
+        all_block_ids: list[str] = []
+        seen_ids: set[str] = set()
+        for _, _, blocks in snapshots:
+            for block in blocks:
+                if block.id not in seen_ids:
+                    all_block_ids.append(block.id)
+                    seen_ids.add(block.id)
+
+        # For each block ID, collect versions from each snapshot
+        merged_blocks: list[Block] = []
+        for block_id in all_block_ids:
+            versions: list[Version] = []
+            block_title = ""
+            block_type = "article"
+
+            for snap_date, snap_id, blocks in snapshots:
+                for block in blocks:
+                    if block.id == block_id:
+                        block_title = block_title or block.title
+                        block_type = block.block_type
+                        versions.append(
+                            Version(
+                                norm_id=f"{norm_id}:{snap_id}",
+                                publication_date=snap_date,
+                                effective_date=snap_date,
+                                paragraphs=block.versions[0].paragraphs,
+                            )
+                        )
+                        break
+
+            if versions:
+                merged_blocks.append(
+                    Block(
+                        id=block_id,
+                        block_type=block_type,
+                        title=block_title,
+                        versions=tuple(versions),
+                    )
+                )
+
+        # Build reforms: one per snapshot, with affected_blocks
+        reforms: list[Reform] = []
+        prev_block_texts: dict[str, str] = {}
+
+        for snap_date, snap_id, blocks in snapshots:
+            current_texts: dict[str, str] = {}
+            for block in blocks:
+                text = "\n".join(p.text for p in block.versions[0].paragraphs)
+                current_texts[block.id] = text
+
+            if not prev_block_texts:
+                # First version — all blocks are "affected" (bootstrap)
+                affected = tuple(b.id for b in blocks)
+            else:
+                # Find blocks that changed or were added/removed
+                changed: list[str] = []
+                all_ids = set(current_texts) | set(prev_block_texts)
+                for bid in all_ids:
+                    if current_texts.get(bid) != prev_block_texts.get(bid):
+                        changed.append(bid)
+                affected = tuple(changed)
+
+            reforms.append(
+                Reform(
+                    date=snap_date,
+                    norm_id=f"{norm_id}:{snap_id}",
+                    affected_blocks=affected,
+                )
+            )
+
+            prev_block_texts = current_texts
+
+        return merged_blocks, reforms
+
+    def _parse_paragraphs_to_blocks(
+        self, paragraphs: list[Paragraph], pub_date: date
+    ) -> list[Block]:
+        """Parse a flat list of paragraphs into Block objects (shared logic)."""
         blocks: list[Block] = []
         current_id = "full"
         current_title = "Full text"
@@ -149,14 +279,6 @@ class TARTextParser(TextParser):
             blocks.append(self._make_block(current_id, current_title, current_paragraphs, pub_date))
 
         return blocks
-
-    def extract_reforms(self, data: bytes) -> list[Any]:
-        """Extract reform timeline.
-
-        data.gov.lt provides consolidated text; reform history requires
-        cross-referencing amendment metadata. Returns empty list for now.
-        """
-        return []
 
     @staticmethod
     def _make_block(
