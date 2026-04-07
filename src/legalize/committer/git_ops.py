@@ -111,6 +111,8 @@ class GitRepo:
             "GIT_COMMITTER_DATE": author_date,
             "GIT_AUTHOR_NAME": info.author_name,
             "GIT_AUTHOR_EMAIL": info.author_email,
+            "GIT_COMMITTER_NAME": self._committer_name,
+            "GIT_COMMITTER_EMAIL": self._committer_email,
         }
 
         self._run(["commit", "-m", message], env=env)
