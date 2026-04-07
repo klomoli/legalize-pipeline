@@ -94,15 +94,19 @@ class IMPODiscovery(NormDiscovery):
         law_number_max = source.get("law_number_max", 20500)
         law_number_start = source.get("law_number_start", 9000)
         catalog_path = source.get("catalog_path")
+        decretos_ley_catalog_path = source.get("decretos_ley_catalog_path")
         # generic_fetch_all injects the data dir as `cache_dir`; that's where
-        # `scripts/build_uy_catalog.py` writes the pre-built catalog by default.
+        # `scripts/build_uy_catalog.py` writes the pre-built catalogs by default.
         if catalog_path is None and source.get("cache_dir"):
             catalog_path = str(Path(source["cache_dir"]) / "catalog.json")
+        if decretos_ley_catalog_path is None and source.get("cache_dir"):
+            decretos_ley_catalog_path = str(Path(source["cache_dir"]) / "decretos-ley.catalog.json")
         return cls(
             collections=collections,
             law_number_max=law_number_max,
             law_number_start=law_number_start,
             catalog_path=catalog_path,
+            decretos_ley_catalog_path=decretos_ley_catalog_path,
         )
 
     def __init__(
@@ -111,6 +115,7 @@ class IMPODiscovery(NormDiscovery):
         law_number_max: int = 20500,
         law_number_start: int = 9000,
         catalog_path: str | None = None,
+        decretos_ley_catalog_path: str | None = None,
     ) -> None:
         self._collections = collections or list(DEFAULT_COLLECTIONS)
         self._law_number_max = law_number_max
@@ -122,6 +127,7 @@ class IMPODiscovery(NormDiscovery):
         # `scripts/build_uy_catalog.py`), use it instead of probing IMPO
         # one number at a time. The catalog is a JSON list of norm IDs.
         self._catalog_path = catalog_path
+        self._decretos_ley_catalog_path = decretos_ley_catalog_path
 
     def discover_all(self, client: LegislativeClient, **kwargs) -> Iterator[str]:
         """Yield norm IDs for all collections.
@@ -227,7 +233,29 @@ class IMPODiscovery(NormDiscovery):
                     break  # found the right year, move to next number
 
     def _discover_decretos_ley(self, client: IMPOClient, **kwargs) -> Iterator[str]:
-        """Iterate decreto-ley numbers (1973-1985 period)."""
+        """Iterate decreto-ley numbers (1973-1985 period).
+
+        Fast path: read the pre-built catalog at
+        `<data_dir>/decretos-ley.catalog.json` if it exists, written by
+        `scripts/build_uy_catalog.py --collection decretos-ley`.
+        """
+        if self._decretos_ley_catalog_path and Path(self._decretos_ley_catalog_path).exists():
+            try:
+                cached = json.loads(Path(self._decretos_ley_catalog_path).read_text())
+                logger.info(
+                    "Loaded %d decretos-ley from catalog cache at %s",
+                    len(cached),
+                    self._decretos_ley_catalog_path,
+                )
+                yield from cached
+                return
+            except (json.JSONDecodeError, OSError) as exc:
+                logger.warning(
+                    "Catalog at %s unreadable, falling back to probing: %s",
+                    self._decretos_ley_catalog_path,
+                    exc,
+                )
+
         limit = kwargs.get("limit", 16000)
         start = kwargs.get("start", 14000)
 

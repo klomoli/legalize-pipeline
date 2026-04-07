@@ -36,16 +36,30 @@ def _is_json_response(content: bytes) -> bool:
     return head == b"{"
 
 
-def probe_one(session: requests.Session, num: int, last_year_hint: int | None) -> tuple[int, str | None]:
-    """Try candidate years for a single law number, return (num, "leyes/N-Y") or (num, None)."""
-    candidates = _year_candidates(num)
+def probe_one(
+    session: requests.Session,
+    num: int,
+    last_year_hint: int | None,
+    *,
+    collection: str = "leyes",
+    candidate_years: list[int] | None = None,
+) -> tuple[int, str | None]:
+    """Try candidate years for a single norm number.
+
+    Returns ``(num, "{collection}/N-Y")`` on the first valid hit, or
+    ``(num, None)`` after exhausting all candidates.
+    """
+    if candidate_years is None:
+        candidates = _year_candidates(num)
+    else:
+        candidates = list(candidate_years)
     if last_year_hint is not None and last_year_hint not in candidates:
         candidates = [last_year_hint, *candidates]
     elif last_year_hint is not None:
         candidates = [last_year_hint, *(c for c in candidates if c != last_year_hint)]
 
     for year in candidates:
-        url = f"{BASE_URL}/bases/leyes/{num}-{year}?json=true"
+        url = f"{BASE_URL}/bases/{collection}/{num}-{year}?json=true"
         try:
             r = session.get(url, timeout=20)
         except requests.RequestException as exc:
@@ -54,12 +68,27 @@ def probe_one(session: requests.Session, num: int, last_year_hint: int | None) -
         if r.status_code != 200:
             continue
         if _is_json_response(r.content):
-            return (num, f"leyes/{num}-{year}")
+            return (num, f"{collection}/{num}-{year}")
     return (num, None)
 
 
-def build_catalog(start: int, end: int, workers: int, out_path: Path) -> None:
-    log.info("Probing leyes/%d..%d with %d workers", start, end, workers)
+def build_catalog(
+    start: int,
+    end: int,
+    workers: int,
+    out_path: Path,
+    *,
+    collection: str = "leyes",
+    candidate_years: list[int] | None = None,
+) -> list[str]:
+    log.info(
+        "Probing %s/%d..%d with %d workers (candidates=%s)",
+        collection,
+        start,
+        end,
+        workers,
+        "auto" if candidate_years is None else candidate_years,
+    )
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     sessions = [requests.Session() for _ in range(workers)]
@@ -74,7 +103,16 @@ def build_catalog(start: int, end: int, workers: int, out_path: Path) -> None:
         futures = {}
         for i, num in enumerate(range(start, end + 1)):
             session = sessions[i % workers]
-            futures[pool.submit(probe_one, session, num, last_year_hint)] = num
+            futures[
+                pool.submit(
+                    probe_one,
+                    session,
+                    num,
+                    last_year_hint,
+                    collection=collection,
+                    candidate_years=candidate_years,
+                )
+            ] = num
 
         completed = 0
         for fut in as_completed(futures):
@@ -82,7 +120,6 @@ def build_catalog(start: int, end: int, workers: int, out_path: Path) -> None:
             num, norm_id = fut.result()
             if norm_id:
                 found[num] = norm_id
-                # Update sticky hint from year of latest find
                 last_year_hint = int(norm_id.rsplit("-", 1)[1])
             if completed % 200 == 0:
                 elapsed = time.time() - started
@@ -99,9 +136,10 @@ def build_catalog(start: int, end: int, workers: int, out_path: Path) -> None:
 
     elapsed = time.time() - started
     log.info(
-        "Done: %d/%d laws found in %.1fs (%.1f probes/s)",
+        "Done: %d/%d %s found in %.1fs (%.1f probes/s)",
         len(found),
         end - start + 1,
+        collection,
         elapsed,
         (end - start + 1) / elapsed,
     )
@@ -109,18 +147,51 @@ def build_catalog(start: int, end: int, workers: int, out_path: Path) -> None:
     norm_ids = [found[n] for n in sorted(found)]
     out_path.write_text(json.dumps(norm_ids, indent=2))
     log.info("Catalog written to %s (%d entries)", out_path, len(norm_ids))
+    return norm_ids
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--start", type=int, default=9000)
-    parser.add_argument("--end", type=int, default=20500)
+    parser.add_argument(
+        "--collection",
+        choices=("leyes", "decretos-ley"),
+        default="leyes",
+        help="Which IMPO collection to enumerate (default: leyes).",
+    )
+    parser.add_argument("--start", type=int, default=None)
+    parser.add_argument("--end", type=int, default=None)
     parser.add_argument("--workers", type=int, default=16)
-    parser.add_argument("--out", default="../countries/data-uy/catalog.json")
+    parser.add_argument(
+        "--out",
+        default=None,
+        help="Output JSON path (default: ../countries/data-uy/{collection}.catalog.json).",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
-    build_catalog(args.start, args.end, args.workers, Path(args.out))
+
+    # Per-collection defaults
+    if args.collection == "leyes":
+        start = args.start if args.start is not None else 9000
+        end = args.end if args.end is not None else 20500
+        candidate_years = None  # use the year-landmark estimator
+        out_default = "../countries/data-uy/catalog.json"
+    else:  # decretos-ley
+        # The de-facto period: laws 14001..16000 enacted between 1973 and 1985.
+        start = args.start if args.start is not None else 14001
+        end = args.end if args.end is not None else 16000
+        candidate_years = list(range(1973, 1986))
+        out_default = "../countries/data-uy/decretos-ley.catalog.json"
+
+    out_path = Path(args.out or out_default)
+    build_catalog(
+        start,
+        end,
+        args.workers,
+        out_path,
+        collection=args.collection,
+        candidate_years=candidate_years,
+    )
     return 0
 
 
