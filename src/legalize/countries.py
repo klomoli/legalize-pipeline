@@ -96,6 +96,12 @@ REGISTRY: dict[str, dict[str, tuple[str, str]]] = {
         "text_parser": ("legalize.fetcher.lv.parser", "LikumiTextParser"),
         "metadata_parser": ("legalize.fetcher.lv.parser", "LikumiMetadataParser"),
     },
+    "pl": {
+        "client": ("legalize.fetcher.pl.client", "EliClient"),
+        "discovery": ("legalize.fetcher.pl.discovery", "EliDiscovery"),
+        "text_parser": ("legalize.fetcher.pl.parser", "EliTextParser"),
+        "metadata_parser": ("legalize.fetcher.pl.parser", "EliMetadataParser"),
+    },
     # To add a new country:
     # 1. Create fetcher/{code}/ with client.py, discovery.py, parser.py
     # 2. Register here
