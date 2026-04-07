@@ -565,7 +565,8 @@ class TestYearEstimation:
         assert _estimate_year(25000) == 2026
 
     def test_candidates_length(self):
-        assert len(_year_candidates(19000)) == 5
+        # Estimator + ±1 — landmarks are dense enough to make this enough.
+        assert len(_year_candidates(19000)) == 3
 
 
 class TestIMPODiscoveryDaily:
