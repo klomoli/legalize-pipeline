@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?><toestand xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" bwb-ng-vast-deel="http://wetten.overheid.nl/id/BWBR0007059/1994-12-06/0" xsi:noNamespaceSchemaLocation="https://repository.officiele-overheidspublicaties.nl/Schema/BWB-toestand/2016-1/xsd/toestand_2016-1.xsd" bwb-id="BWBR0007059" inwerkingtreding="1994-12-06"><bwb-inputbestand/><bwb-wijzigingen/><redactionele-correcties/><wetgeving soort="circulaire" stam-id="6267963" versie-id="10951802" id="C14849411" label-id="6256884" inwerkingtredingsdatum="1994-12-06">
+  <intitule bwb-ng-variabel-deel="/Intitule" stam-id="6267983" versie-id="10951642" id="C14849251" label-id="6256724" inwerking="1994-12-06" bron="Stcrt.1995-19" effect="nieuwe-regeling" ondertekening_bron="1994-12-06" publicatie_bron="1995-01-26" publicatie_iwt="1995-01-26" status="goed">Integriteit sector Rijk; systematisch ontwikkelen van preventief beleid<meta-data><brondata><oorspronkelijk><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie></oorspronkelijk><inwerkingtreding><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie><inwerkingtreding.datum isodatum="1994-12-06">06-12-1994</inwerkingtreding.datum></inwerkingtreding></brondata></meta-data></intitule>
+  <citeertitel bwb-ng-variabel-deel="/Citeertitel" status="redactioneel" stam-id="6267993" versie-id="10951652" id="C14849261" label-id="6256734" inwerking="1994-12-06" bron="Stcrt.1995-19" effect="nieuwe-regeling" ondertekening_bron="1994-12-06" publicatie_bron="1995-01-26" publicatie_iwt="1995-01-26">Integriteit sector Rijk; systematisch ontwikkelen van preventief beleid<meta-data><brondata><oorspronkelijk><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie></oorspronkelijk><inwerkingtreding><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie><inwerkingtreding.datum isodatum="1994-12-06">06-12-1994</inwerkingtreding.datum></inwerkingtreding></brondata></meta-data></citeertitel>
+  <circulaire>
+    <circulaire.aanhef bwb-ng-variabel-deel="/Aanhef" stam-id="6268003" versie-id="10951662" id="C14849271" label-id="6256744" inwerking="1994-12-06" bron="Stcrt.1995-19" effect="nieuwe-regeling" ondertekening_bron="1994-12-06" publicatie_bron="1995-01-26" publicatie_iwt="1995-01-26" status="goed">
+  <context>
+    <context.al type="onbepaald">Circulaire aan de ministers</context.al>
+  </context>
+<meta-data><brondata><oorspronkelijk><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie></oorspronkelijk><inwerkingtreding><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie><inwerkingtreding.datum isodatum="1994-12-06">06-12-1994</inwerkingtreding.datum></inwerkingtreding></brondata></meta-data></circulaire.aanhef>
+    <circulaire-tekst>
+      <circulaire.divisie bwb-ng-variabel-deel="/Circulaire.divisieI" stam-id="6268023" versie-id="10951682" id="C14849291" label-id="6256764" inwerking="1994-12-06" label="I" bron="Stcrt.1995-19" effect="nieuwe-regeling" ondertekening_bron="1994-12-06" publicatie_bron="1995-01-26" publicatie_iwt="1995-01-26" status="goed">
+  <kop>
+    <nr>I</nr>
+    <titel>Samenvatting</titel>
+  </kop><tekst bwb-ng-variabel-deel="/Circulaire.divisieI/Tekst" stam-id="6268013" versie-id="10951672" id="C14849281" label-id="6256754" inwerking="1994-12-06" status="goed">
+  <al>In deze circulaire wordt de bewindslieden verzocht medewerking te verlenen aan het ontwikkelen van preventief beleid ter voorkoming van aantasting van de integriteit. Door middel van een zevental onderscheiden stappen wordt een handreiking geboden voor een te volgen systematiek. Bij de circulaire behoren twee basisnotities waarin de bij elk der onderscheiden stappen aangegeven maatregelen en instrumenten nader worden uitgewerkt.</al>
+  <al>De invalshoek is die van organisatorische en personele maatregelen enerzijds en de rechtspositionele instrumenten anderzijds.</al>
+  <al>De stukken zijn besproken in daartoe geëigende interdepartementale gremia. </al>
+<meta-data><brondata><oorspronkelijk><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie></oorspronkelijk><inwerkingtreding><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie><inwerkingtreding.datum isodatum="1994-12-06">06-12-1994</inwerkingtreding.datum></inwerkingtreding></brondata></meta-data></tekst><meta-data><brondata><oorspronkelijk><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie></oorspronkelijk><inwerkingtreding><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie><inwerkingtreding.datum isodatum="1994-12-06">06-12-1994</inwerkingtreding.datum></inwerkingtreding></brondata></meta-data></circulaire.divisie>
+      <circulaire.divisie bwb-ng-variabel-deel="/Circulaire.divisieII" stam-id="6268043" versie-id="10951702" id="C14849311" label-id="6256784" inwerking="1994-12-06" label="II" bron="Stcrt.1995-19" effect="nieuwe-regeling" ondertekening_bron="1994-12-06" publicatie_bron="1995-01-26" publicatie_iwt="1995-01-26" status="goed">
+  <kop>
+    <nr>II</nr>
+    <titel>Inleiding</titel>
+  </kop><tekst bwb-ng-variabel-deel="/Circulaire.divisieII/Tekst" stam-id="6268033" versie-id="10951692" id="C14849301" label-id="6256774" inwerking="1994-12-06" status="goed">
+  <al>Het besteden van ruime aandacht aan het onderwerp integriteit in de openbare sector acht ik zeer waardevol. Integriteit is één van de wezenlijke voorwaarden voor een goed functionerend openbaar bestuur. Bij het ontwikkelen van het beleid met betrekking tot de integriteit van de openbare sector is mijn uitgangspunt, dat het handelen van de overheid gekenmerkt moet worden door onkreukbaarheid, betrouwbaarheid en zorgvuldigheid. Van zeer groot belang hierbij is de mate waarin de overheid erin slaagt de democratische en rechtsstatelijke waarden te handhaven.</al>
+  <al>Aantasting van de integriteit van de openbare sector zie ik als een ernstig verschijnsel. Een dergelijke aantasting kan de acceptatie van regelgeving verminderen en daarmee de democratische rechtsorde in gevaar brengen. Daarom is het voeren van een op preventie gericht beleid van groot belang.</al>
+  <al>Deze circulaire heeft als doel te bereiken dat binnen de sector Rijk zo'n beleid wordt ontwikkeld. Een preventief beleid waarmee de gedragsvormen die de legitimiteit van de openbare dienst bedreigen zoveel als mogelijk is kunnen worden voorkomen. Tot deze gedragsvormen moet worden gerekend: fraude, omkoping en het uitoefenen van onoirbare nevenwerkzaamheden.</al>
+  <al>Zo'n beleid dient te worden ontwikkeld binnen de wettelijke kaders en met een optimaal gebruik daarvan, al naar gelang het takenveld en de wijze van opereren. Uiteraard dient zo'n beleid niet op zichzelf te staan, maar onderdeel te vormen van het beleid dat gericht is op de optimalisering van de kwaliteit van de openbare dienst.</al>
+  <al>De mate van corruptie- en fraudegevoeligheid van werkzaamheden hangt direct samen met de omgeving waarin die werkzaamheden worden uitgeoefend. Daarom is het voeren van preventief beleid maatwerk.</al>
+  <al>Ik verzoek u hierbij om uw medewerking te verlenen aan het ook voor uw ministerie ontwikkelen van preventief beleid. Dit beleid moet erop gericht zijn de risico's van aantasting van de integriteit van zowel de eigen organisatie als van de medewerkers die daar deel van uitmaken, terug te dringen en waar mogelijk uit te sluiten.</al>
+  <al>Met het oog daarop zend ik u hierbij als een handreiking voor de systematische ontwikkeling van preventief beleid een tweetal basisnotities, waarin enerzijds de verschillende organisatorische en personele maatregelen en anderzijds de beschikbare rechtspositionele instrumenten zijn beschreven.</al>
+  <al>Ik merk hierbij nog het volgende op. </al>
+<meta-data><brondata><oorspronkelijk><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie></oorspronkelijk><inwerkingtreding><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie><inwerkingtreding.datum isodatum="1994-12-06">06-12-1994</inwerkingtreding.datum></inwerkingtreding></brondata></meta-data></tekst><meta-data><brondata><oorspronkelijk><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie></oorspronkelijk><inwerkingtreding><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie><inwerkingtreding.datum isodatum="1994-12-06">06-12-1994</inwerkingtreding.datum></inwerkingtreding></brondata></meta-data></circulaire.divisie>
+      <circulaire.divisie bwb-ng-variabel-deel="/Circulaire.divisieIII" stam-id="6268063" versie-id="10951722" id="C14849331" label-id="6256804" inwerking="1994-12-06" label="III" bron="Stcrt.1995-19" effect="nieuwe-regeling" ondertekening_bron="1994-12-06" publicatie_bron="1995-01-26" publicatie_iwt="1995-01-26" status="goed">
+  <kop>
+    <nr>III</nr>
+    <titel>De te onderscheiden stappen bij het systematisch ontwikkelen van preventief beleid</titel>
+  </kop><tekst bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst" stam-id="6268053" versie-id="10951712" id="C14849321" label-id="6256794" inwerking="1994-12-06" status="goed">
+  <al>Bij het ontwikkelen van preventief beleid worden de volgende zeven stappen onderscheiden; per stap worden de mogelijke maatregelen en instrumenten aangeduid. </al>
+  <lijst>
+    <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel1">
+      <li.nr>1.</li.nr>
+      <al>Het doorlichten van de organisatie</al>
+      <lijst level="single" nr-sluiting="." start="1" type="expliciet">
+        <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel1/Onderdeela">
+          <li.nr>a.</li.nr>
+          <al>bepaling van intrinsiek kwetsbare onderdelen van de organisatie en onderdelen daarvan;</al>
+        <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=1&amp;o=a&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=a"/></jcis></meta-data></li>
+        <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel1/Onderdeelb">
+          <li.nr>b.</li.nr>
+          <al>inventarisatie van kwetsbare functies. </al>
+        <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=1&amp;o=b&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=b"/></jcis></meta-data></li>
+      </lijst>
+    <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=1&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=1"/></jcis></meta-data></li>
+    <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel2">
+      <li.nr>2.</li.nr>
+      <al>Het veilig stellen van de integriteit van de organisatie</al>
+      <lijst level="single" nr-sluiting="." start="1" type="expliciet">
+        <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel2/Onderdeela">
+          <li.nr>a.</li.nr>
+          <al>functiescheiding en controle;</al>
+        <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=2&amp;o=a&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=a"/></jcis></meta-data></li>
+        <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel2/Onderdeelb">
+          <li.nr>b.</li.nr>
+          <al>aanwijzen van bijzondere functies;</al>
+        <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=2&amp;o=b&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=b"/></jcis></meta-data></li>
+        <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel2/Onderdeelc">
+          <li.nr>c.</li.nr>
+          <al>functieroulatie;</al>
+        <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=2&amp;o=c&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=c"/></jcis></meta-data></li>
+        <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel2/Onderdeeld">
+          <li.nr>d.</li.nr>
+          <al>instellen visitatiecommissies en aanstellen van vertrouwensfiguren;</al>
+        <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=2&amp;o=d&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=d"/></jcis></meta-data></li>
+        <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel2/Onderdeele">
+          <li.nr>e.</li.nr>
+          <al>transparant maken van overheidshandelen. </al>
+        <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=2&amp;o=e&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=e"/></jcis></meta-data></li>
+      </lijst>
+    <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=2&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=2"/></jcis></meta-data></li>
+    <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel3">
+      <li.nr>3.</li.nr>
+      <al>Het systematisch bewaken van de toetreding</al>
+      <lijst level="single" nr-sluiting="." start="1" type="expliciet">
+        <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel3/Onderdeela">
+          <li.nr>a.</li.nr>
+          <al>beëdiging;</al>
+        <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=3&amp;o=a&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=a"/></jcis></meta-data></li>
+        <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel3/Onderdeelb">
+          <li.nr>b.</li.nr>
+          <al>werving en selectie. </al>
+        <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=3&amp;o=b&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=b"/></jcis></meta-data></li>
+      </lijst>
+    <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=3&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=3"/></jcis></meta-data></li>
+    <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel4">
+      <li.nr>4.</li.nr>
+      <al>De gedragsregels voor medewerkers</al>
+      <lijst level="single" nr-sluiting="." start="1" type="expliciet">
+        <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel4/Onderdeela">
+          <li.nr>a.</li.nr>
+          <al>gedragsregels voor ambtenaren</al>
+        <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=4&amp;o=a&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=a"/></jcis></meta-data></li>
+        <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel4/Onderdeelb">
+          <li.nr>b.</li.nr>
+          <al>praktische regels met betrekking tot de omgang met burgers. </al>
+        <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=4&amp;o=b&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=b"/></jcis></meta-data></li>
+      </lijst>
+    <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=4&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=4"/></jcis></meta-data></li>
+    <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel5">
+      <li.nr>5.</li.nr>
+      <al>Het levend houden van de gedragsregels</al>
+      <lijst level="single" nr-sluiting="." start="1" type="expliciet">
+        <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel5/Onderdeela">
+          <li.nr>a.</li.nr>
+          <al>functioneringsgesprekken;</al>
+        <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=5&amp;o=a&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=a"/></jcis></meta-data></li>
+        <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel5/Onderdeelb">
+          <li.nr>b.</li.nr>
+          <al>opleiding en vorming;</al>
+        <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=5&amp;o=b&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=b"/></jcis></meta-data></li>
+        <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel5/Onderdeelc">
+          <li.nr>c.</li.nr>
+          <al>op managementagenda plaatsen. </al>
+        <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=5&amp;o=c&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=c"/></jcis></meta-data></li>
+      </lijst>
+    <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=5&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=5"/></jcis></meta-data></li>
+    <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel6">
+      <li.nr>6.</li.nr>
+      <al>De controle op de naleving van de gedragsregels</al>
+    <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=6&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=6"/></jcis></meta-data></li>
+    <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel7">
+      <li.nr>7.</li.nr>
+      <al>De maatregelen in geval van ontoelaatbare handelingen of het risico daarop</al>
+      <lijst level="single" nr-sluiting="." start="1" type="expliciet">
+        <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel7/Onderdeela">
+          <li.nr>a.</li.nr>
+          <al>overplaatsing/ontheffing;</al>
+        <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=7&amp;o=a&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=a"/></jcis></meta-data></li>
+        <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel7/Onderdeelb">
+          <li.nr>b.</li.nr>
+          <al>aangifte;</al>
+        <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=7&amp;o=b&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=b"/></jcis></meta-data></li>
+        <li bwb-ng-variabel-deel="/Circulaire.divisieIII/Tekst/Onderdeel7/Onderdeelc">
+          <li.nr>c.</li.nr>
+          <al>disciplinaire bestraffing.</al>
+        <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=7&amp;o=c&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=c"/></jcis></meta-data></li>
+      </lijst>
+    <meta-data><jcis><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;o=7&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="o=7"/></jcis></meta-data></li>
+  </lijst>
+  <al>Bij de concretisering van het bovenstaande kunt u gebruik maken van de inhoud van de twee bovengenoemde notities. Afhankelijk van de situatie kan het, te uwer beoordeling, nodig zijn andere accenten te leggen of bestaande instrumenten aan te scherpen.</al>
+  <al>Ik teken hier nog bij aan dat het aanbeveling verdient de genoemde maatregelen en instrumenten in samenhang te bezien. Een optimaal beleid wordt met name verkregen indien niet slechts aan onderdelen, maar juist aan alle aspecten die in de onderscheiden stappen zijn genoemd bij de beleidsontwikkeling aandacht wordt geschonken. </al>
+<meta-data><brondata><oorspronkelijk><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie></oorspronkelijk><inwerkingtreding><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie><inwerkingtreding.datum isodatum="1994-12-06">06-12-1994</inwerkingtreding.datum></inwerkingtreding></brondata></meta-data></tekst><meta-data><brondata><oorspronkelijk><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie></oorspronkelijk><inwerkingtreding><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie><inwerkingtreding.datum isodatum="1994-12-06">06-12-1994</inwerkingtreding.datum></inwerkingtreding></brondata></meta-data></circulaire.divisie>
+      <circulaire.divisie bwb-ng-variabel-deel="/Circulaire.divisieIV" stam-id="6268083" versie-id="10951742" id="C14849351" label-id="6256824" inwerking="1994-12-06" label="IV" bron="Stcrt.1995-19" effect="nieuwe-regeling" ondertekening_bron="1994-12-06" publicatie_bron="1995-01-26" publicatie_iwt="1995-01-26" status="goed">
+  <kop>
+    <nr>IV</nr>
+    <titel> De rol van het management; randvoorwaarden voor een preventief beleid</titel>
+  </kop><tekst bwb-ng-variabel-deel="/Circulaire.divisieIV/Tekst" stam-id="6268073" versie-id="10951732" id="C14849341" label-id="6256814" inwerking="1994-12-06" status="goed">
+  <al>Volledigheidshalve wijs ik u erop dat bij de preventie van fraude en corruptie het management een alles bepalende rol vervult. Het management – op alle niveaus – heeft hierbij een voorbeeldfunctie en dient zich daarnaar te gedragen. Wanneer leidinggevenden zich weinig of geen beperkingen opleggen bijvoorbeeld ten aanzien van het aanvaarden van relatiegeschenken en bepaalde gunsten, dan kan moeilijk van hun medewerkers worden verwacht dat deze terughoudendheid betrachten.</al>
+  <al>Of en in welke mate ambtenaren over de schreef gaan, is voorts afhankelijk van de cultuur, met name die in gevoelige afdelingen of dienstonderdelen. De politieke leiding en de ambtelijke top zijn verantwoordelijk voor de cultuur.</al>
+  <al>Een preventief beleid kan alleen vrucht afwerpen, wanneer aan bepaalde randvoorwaarden wordt voldaan. Daartoe behoort de hier genoemde voorbeeldfunctie van het management. Daarnaast moet men bereid zijn te erkennen dat corruptie en fraude in de eigen organisatie kunnen voorkomen. </al>
+<meta-data><brondata><oorspronkelijk><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie></oorspronkelijk><inwerkingtreding><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie><inwerkingtreding.datum isodatum="1994-12-06">06-12-1994</inwerkingtreding.datum></inwerkingtreding></brondata></meta-data></tekst><meta-data><brondata><oorspronkelijk><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie></oorspronkelijk><inwerkingtreding><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie><inwerkingtreding.datum isodatum="1994-12-06">06-12-1994</inwerkingtreding.datum></inwerkingtreding></brondata></meta-data></circulaire.divisie>
+      <circulaire.divisie bwb-ng-variabel-deel="/Circulaire.divisieV" stam-id="6268103" versie-id="10951762" id="C14849371" label-id="6256844" inwerking="1994-12-06" label="V" bron="Stcrt.1995-19" effect="nieuwe-regeling" ondertekening_bron="1994-12-06" publicatie_bron="1995-01-26" publicatie_iwt="1995-01-26" status="goed">
+  <kop>
+    <nr>V</nr>
+    <titel>Evaluatie</titel>
+  </kop><tekst bwb-ng-variabel-deel="/Circulaire.divisieV/Tekst" stam-id="6268093" versie-id="10951752" id="C14849361" label-id="6256834" inwerking="1994-12-06" status="goed">
+  <al>Het grote belang van het onderwerp Integriteit in de openbare sector blijkt onder meer uit de aandacht die de Tweede Kamer der Staten-Generaal voor dit onderwerp heeft. De Kamer is in het bezit van een overzicht van de diverse lopende en voorgenomen activiteiten. Volledigheidshalve verwijs ik u naar de inhoud van mijn brieven aan de Kamer van 25 oktober 1993 en 11 februari 1994 (Tweede Kamer, vergaderjaar 1993 - 1994, 23 400 VII, nrs. 11 en 29).</al>
+  <al>Het ligt in mijn voornemen ook deze circulaire en de daarbij behorende <intref verwijzing-id="1889911" doc="jci1.3:c:BWBR0007059&amp;bijlage=1&amp;z=1994-12-06&amp;g=1994-12-06" bwb-id="BWBR0007059" label-id="6256864,6256874" bwb-ng-variabel-deel="/Bijlage1">bijlagen</intref> aan te bieden aan de Kamer en daarbij mee te delen dat ik de ontwikkelingen bij de departementen zal volgen. Ik wil daarbij toezeggen dat ik eind volgend jaar de Kamer op de hoogte zal brengen van de vorderingen terzake. Tegen die tijd zal ik met u contact opnemen voor de verkrijging van de daarvoor nodige informatie.</al>
+  <al>Gelijktijdig verschijnt in het kader van het thema Integriteit, een <extref doc="jci1.3:c:BWBR0007060" verwijzing-id="1890125" bwb-id="BWBR0007060" label-id="6259364">circulaire Nevenwerkzaamheden rijksambtenaren</extref> (kenmerk AD94/U 825).</al>
+<meta-data><brondata><oorspronkelijk><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie></oorspronkelijk><inwerkingtreding><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie><inwerkingtreding.datum isodatum="1994-12-06">06-12-1994</inwerkingtreding.datum></inwerkingtreding></brondata></meta-data></tekst><meta-data><brondata><oorspronkelijk><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie></oorspronkelijk><inwerkingtreding><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie><inwerkingtreding.datum isodatum="1994-12-06">06-12-1994</inwerkingtreding.datum></inwerkingtreding></brondata></meta-data></circulaire.divisie>
+    </circulaire-tekst>
+    <circulaire-sluiting bwb-ng-variabel-deel="/SlotformulierEnOndertekening" stam-id="6268113" versie-id="10951772" id="C14849381" label-id="6256854" inwerking="1994-12-06" bron="Stcrt.1995-19" effect="nieuwe-regeling" ondertekening_bron="1994-12-06" publicatie_bron="1995-01-26" publicatie_iwt="1995-01-26" status="goed">
+  <ondertekenaar>
+    <ondertekening>De <functie>Minister</functie> van <organisatie>Binnenlandse Zaken</organisatie>,<naam><voornaam>H.F.</voornaam><achternaam>Dijkstal</achternaam></naam></ondertekening>
+  </ondertekenaar>
+<meta-data><brondata><oorspronkelijk><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie></oorspronkelijk><inwerkingtreding><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie><inwerkingtreding.datum isodatum="1994-12-06">06-12-1994</inwerkingtreding.datum></inwerkingtreding></brondata></meta-data></circulaire-sluiting>
+    <bijlage bwb-ng-variabel-deel="/Bijlage1" stam-id="6268123" versie-id="10951782" id="C14849391" label-id="6256864" inwerking="1994-12-06" label="Bijlage 1" bron="Stcrt.1995-19" effect="nieuwe-regeling" ondertekening_bron="1994-12-06" publicatie_bron="1995-01-26" publicatie_iwt="1995-01-26" status="goed">
+  <kop>
+    <label>Bijlage</label>
+    <nr>1</nr>
+  </kop>
+  <al>
+    <redactie type="vervanging">Ligt ter inzage bij het ministerie van Binnenlandse Zaken.</redactie>
+  </al>
+<meta-data><brondata><oorspronkelijk><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie></oorspronkelijk><inwerkingtreding><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie><inwerkingtreding.datum isodatum="1994-12-06">06-12-1994</inwerkingtreding.datum></inwerkingtreding></brondata><jcis><jci versie="1.0" verwijzing="1.0:c:BWBR0007059&amp;bijlage=1&amp;g=1994-12-06" onderdeel="bijlage=1" korte-verwijzing="1.0:c:BWBR0007059&amp;bijlage=1"/><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;bijlage=1&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="bijlage=1" korte-verwijzing="jci1.3:c:BWBR0007059&amp;bijlage=1"/></jcis></meta-data></bijlage>
+    <bijlage bwb-ng-variabel-deel="/Bijlage2" stam-id="6268133" versie-id="10951792" id="C14849401" label-id="6256874" inwerking="1994-12-06" label="Bijlage 2" bron="Stcrt.1995-19" effect="nieuwe-regeling" ondertekening_bron="1994-12-06" publicatie_bron="1995-01-26" publicatie_iwt="1995-01-26" status="goed">
+  <kop>
+    <label>Bijlage</label>
+    <nr>2</nr>
+  </kop>
+  <al>
+    <redactie type="vervanging">Ligt ter inzage bij het ministerie van Binnenlandse Zaken.</redactie>
+  </al>
+<meta-data><brondata><oorspronkelijk><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie></oorspronkelijk><inwerkingtreding><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie><inwerkingtreding.datum isodatum="1994-12-06">06-12-1994</inwerkingtreding.datum></inwerkingtreding></brondata><jcis><jci versie="1.0" verwijzing="1.0:c:BWBR0007059&amp;bijlage=2&amp;g=1994-12-06" onderdeel="bijlage=2" korte-verwijzing="1.0:c:BWBR0007059&amp;bijlage=2"/><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;bijlage=2&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="bijlage=2" korte-verwijzing="jci1.3:c:BWBR0007059&amp;bijlage=2"/></jcis></meta-data></bijlage>
+  </circulaire>
+<meta-data><brondata><oorspronkelijk><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie></oorspronkelijk><inwerkingtreding><publicatie effect="nieuwe-regeling" soort="Stcrt" urlidentifier="stcrt-1995-19-p0-SC1873"><publicatiejaar>1995</publicatiejaar><publicatienr>19</publicatienr><uitgiftedatum isodatum="1995-01-26">26-01-1995</uitgiftedatum><ondertekeningsdatum isodatum="1994-12-06">06-12-1994</ondertekeningsdatum><kenmerk>AD94/U1369</kenmerk></publicatie><inwerkingtreding.datum isodatum="1994-12-06">06-12-1994</inwerkingtreding.datum></inwerkingtreding></brondata><jcis><jci versie="1.0" verwijzing="1.0:c:BWBR0007059&amp;g=1994-12-06" onderdeel="wetgeving" korte-verwijzing="1.0:c:BWBR0007059"/><jci versie="1.3" verwijzing="jci1.3:c:BWBR0007059&amp;z=1994-12-06&amp;g=1994-12-06" onderdeel="wetgeving" korte-verwijzing="jci1.3:c:BWBR0007059"/></jcis></meta-data></wetgeving></toestand>
