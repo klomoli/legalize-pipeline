@@ -312,12 +312,18 @@ countries:
   ua:
     repo_path: "../countries/ua"
     data_dir: "../countries/data-ua"
-    max_workers: 1
+    # Benchmark 2026-04-13 (50 laws, .txt + .xml per law):
+    #   1w × 1.0 r/s → 0.21 laws/s (0 errors)
+    #   2w × 1.5 r/s → 0.34 laws/s (0 errors) — sweet spot
+    #   4w × 2.0 r/s → 0.44 laws/s (5 errors, 429 Too Many Requests)
+    # API rate limit: 60 req/min. Each law = 2 reqs (.txt + .xml).
+    # Full bootstrap (~43K laws): ~35h at 2w × 1.5 r/s.
+    max_workers: 2
     source:
       base_url: "https://data.rada.gov.ua"
       zakon_base_url: "https://zakon.rada.gov.ua"
       request_timeout: 30
       max_retries: 5
-      requests_per_second: 1.0
+      requests_per_second: 1.5
       type_lists: ["t1", "t3", "t4", "t5", "t21", "t216"]
       include_perv1: true
