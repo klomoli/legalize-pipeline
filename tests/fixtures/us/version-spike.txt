@@ -1,0 +1,45 @@
+Version History Spike — US Code Title 1 (General Provisions)
+============================================================
+
+Source: OLRC USLM XML release points via Wayback Machine
+
+Version 1: PL 113-21 (2013)
+  File: usc01@113-21.xml (198,911 bytes)
+  Sections: 40
+  Total text: 91,758 chars
+  docPublicationName: Online@113-21
+
+Version 2: PL 118-158 (2024)  
+  File: usc01.xml (278,510 bytes)
+  Sections: 40
+  Total text: 123,738 chars
+  docPublicationName: Online@118-158
+
+Differences:
+  Added sections: 0
+  Removed sections: 0
+  Changed sections: 21 (52.5%)
+  Unchanged sections: 19
+
+Changed sections:
+  /us/usc/t1/s1    — Words denoting number, gender, and so forth
+  /us/usc/t1/s105  — Title of appropriation Acts
+  /us/usc/t1/s106  — Printing bills and joint resolutions
+  /us/usc/t1/s106a — Promulgation of laws
+  /us/usc/t1/s106b — Amendments to Constitution
+  /us/usc/t1/s111  — Repeals as evidence of prior effectiveness
+  /us/usc/t1/s112  — Statutes at Large; contents; admissibility
+  /us/usc/t1/s112a — US Treaties and Other International Agreements
+  /us/usc/t1/s112b — US international agreements (non-binding)
+  /us/usc/t1/s113  — "Little and Brown's" edition; slip laws
+  /us/usc/t1/s201  — Publication and distribution of Code
+  /us/usc/t1/s202  — Preparation and publication of Codes
+  /us/usc/t1/s203  — District of Columbia Code
+  /us/usc/t1/s204  — Codes and Supplements as evidence
+  + 7 more sections with editorial/statutory note changes
+
+Conclusion: GATE PASS
+  - 2 distinct versions extracted with dates
+  - Stable identifiers link versions to same sections
+  - Text differences measurable and meaningful
+  - Download via Wayback Machine works as fallback for OLRC geo-block
