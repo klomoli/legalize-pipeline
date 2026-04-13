@@ -20,26 +20,18 @@ from legalize.models import NormMetadata, NormStatus, Rank
 
 console = Console()
 
-# ELI codes for all Spanish autonomous communities
-_CCAA_CODES = [
-    "es-an",
-    "es-ar",
-    "es-as",
-    "es-cb",
-    "es-cl",
-    "es-cm",
-    "es-cn",
-    "es-ct",
-    "es-ex",
-    "es-ga",
-    "es-ib",
-    "es-mc",
-    "es-md",
-    "es-nc",
-    "es-pv",
-    "es-ri",
-    "es-vc",
-]
+
+def _get_jurisdiction_codes(country: str) -> list[str]:
+    """Return the list of subnational jurisdiction codes for a country.
+
+    Derived from the country's metadata mappings (e.g., _DEPT_TO_JURISDICTION
+    for Spain). Returns an empty list if no subnational jurisdictions exist.
+    """
+    if country == "es":
+        from legalize.fetcher.es.metadata import _DEPT_TO_JURISDICTION
+
+        return sorted(set(_DEPT_TO_JURISDICTION.values()))
+    return []
 
 
 def _setup_logging(verbose: bool) -> None:
@@ -397,53 +389,65 @@ def reprocess(
 # ─────────────────────────────────────────────
 
 
-@cli.command("fetch-ccaa")
+@cli.command("fetch-jurisdiction")
 @click.argument("jurisdiction", required=False)
-@click.option("--all", "all_flag", is_flag=True, help="Fetch all 17 CCAA.")
+@click.option("--all", "all_flag", is_flag=True, help="Fetch all subnational jurisdictions.")
 @click.option("--force", is_flag=True, help="Re-download even if already exists.")
+@_country_option()
 @click.pass_context
-def fetch_ccaa(ctx: click.Context, jurisdiction: str | None, all_flag: bool, force: bool) -> None:
-    """Download CCAA legislation from BOE API.
+def fetch_jurisdiction(
+    ctx: click.Context, jurisdiction: str | None, all_flag: bool, force: bool, country: str
+) -> None:
+    """Download subnational jurisdiction legislation.
 
     Examples:
-        legalize fetch-ccaa es-pv          # País Vasco only
-        legalize fetch-ccaa --all          # All 17 CCAA
+        legalize fetch-jurisdiction es-pv          # País Vasco only
+        legalize fetch-jurisdiction --all           # All jurisdictions
+        legalize fetch-jurisdiction --all -c es     # Explicit country
     """
     from legalize.fetcher.es.fetch import fetch_catalog_ccaa
 
     config = ctx.obj["config"]
+    codes = _get_jurisdiction_codes(country)
+
+    if not codes:
+        console.print(f"[red]No subnational jurisdictions defined for {country}[/red]")
+        return
 
     if all_flag:
-        for jur in _CCAA_CODES:
+        for jur in codes:
             fetch_catalog_ccaa(config, jur, force=force)
     elif jurisdiction:
-        if jurisdiction not in _CCAA_CODES:
-            console.print(f"[red]Unknown: {jurisdiction}. Valid: {', '.join(_CCAA_CODES)}[/red]")
+        if jurisdiction not in codes:
+            console.print(f"[red]Unknown: {jurisdiction}. Valid: {', '.join(codes)}[/red]")
             return
         fetch_catalog_ccaa(config, jurisdiction, force=force)
     else:
         console.print("Use --all or pass a jurisdiction code.")
-        console.print(f"  Available: {', '.join(_CCAA_CODES)}")
+        console.print(f"  Available: {', '.join(codes)}")
 
 
-@cli.command("bootstrap-ccaa")
+@cli.command("bootstrap-jurisdiction")
 @click.argument("jurisdiction", required=False)
-@click.option("--all", "all_flag", is_flag=True, help="Bootstrap all 17 CCAA.")
+@click.option("--all", "all_flag", is_flag=True, help="Bootstrap all subnational jurisdictions.")
 @click.option("--force", is_flag=True, help="Re-download even if already exists.")
 @click.option("--dry-run", is_flag=True, help="Simulate without creating commits.")
+@_country_option()
 @click.pass_context
-def bootstrap_ccaa(
+def bootstrap_jurisdiction(
     ctx: click.Context,
     jurisdiction: str | None,
     all_flag: bool,
     force: bool,
     dry_run: bool,
+    country: str,
 ) -> None:
-    """Full CCAA bootstrap: fetch + commit.
+    """Full subnational bootstrap: fetch + commit.
 
     Examples:
-        legalize bootstrap-ccaa es-pv          # País Vasco only
-        legalize bootstrap-ccaa --all          # All 17 CCAA
+        legalize bootstrap-jurisdiction es-pv          # País Vasco only
+        legalize bootstrap-jurisdiction --all           # All jurisdictions
+        legalize bootstrap-jurisdiction --all -c es     # Explicit country
     """
     import json
     from pathlib import Path
@@ -452,18 +456,23 @@ def bootstrap_ccaa(
     from legalize.pipeline import commit_one
 
     config = ctx.obj["config"]
+    codes = _get_jurisdiction_codes(country)
 
-    targets = _CCAA_CODES if all_flag else ([jurisdiction] if jurisdiction else [])
+    if not codes:
+        console.print(f"[red]No subnational jurisdictions defined for {country}[/red]")
+        return
+
+    targets = codes if all_flag else ([jurisdiction] if jurisdiction else [])
     if not targets:
         console.print("Use --all or pass a jurisdiction code.")
-        console.print(f"  Available: {', '.join(_CCAA_CODES)}")
+        console.print(f"  Available: {', '.join(codes)}")
         return
 
-    if jurisdiction and jurisdiction not in _CCAA_CODES:
-        console.print(f"[red]Unknown: {jurisdiction}. Valid: {', '.join(_CCAA_CODES)}[/red]")
+    if jurisdiction and jurisdiction not in codes:
+        console.print(f"[red]Unknown: {jurisdiction}. Valid: {', '.join(codes)}[/red]")
         return
 
-    _JUR_TO_DEPT_NAME = {
+    _JUR_TO_NAME = {
         "es-an": "Andalucía",
         "es-ar": "Aragón",
         "es-as": "Asturias",
@@ -480,27 +489,27 @@ def bootstrap_ccaa(
         "es-nc": "Navarra",
         "es-pv": "País Vasco",
         "es-ri": "Rioja",
-        "es-vc": "Valencian",
+        "es-vc": "Valenciana",
     }
 
     grand_total = 0
     for jur in targets:
+        name = _JUR_TO_NAME.get(jur, jur)
         console.print(f"\n[bold]{'=' * 50}[/bold]")
-        console.print(f"[bold]  {jur.upper()} ({_JUR_TO_DEPT_NAME.get(jur, jur)})[/bold]")
+        console.print(f"[bold]  {jur.upper()} ({name})[/bold]")
         console.print(f"[bold]{'=' * 50}[/bold]")
 
         fetch_catalog_ccaa(config, jur, force=force)
 
-        cc = config.get_country("es")
+        cc = config.get_country(country)
         json_dir = Path(cc.data_dir) / "json"
-        dept_name = _JUR_TO_DEPT_NAME.get(jur, "")
         jur_files = []
         for jf in sorted(json_dir.glob("*.json")):
             with open(jf) as f:
                 data = json.load(f)
             jur_code = data.get("metadata", {}).get("jurisdiccion")
             dept = data.get("metadata", {}).get("departamento", "")
-            if jur_code == jur or (not jur_code and dept_name in dept):
+            if jur_code == jur or (not jur_code and name in dept):
                 jur_files.append(jf)
         jur_files = list(dict.fromkeys(jur_files))
 
@@ -510,7 +519,7 @@ def bootstrap_ccaa(
         errors = 0
         for i, jf in enumerate(jur_files, 1):
             try:
-                c = commit_one(config, "es", jf.stem, dry_run=dry_run)
+                c = commit_one(config, country, jf.stem, dry_run=dry_run)
                 commits += c
             except (OSError, ValueError):
                 errors += 1
