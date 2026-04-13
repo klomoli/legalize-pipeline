@@ -16,12 +16,25 @@ Each law is a file. Each reform is a commit. Every country is a repo.
 
 | Country | Repo | Source |
 |---------|------|--------|
-| Spain | [legalize-es](https://github.com/legalize-dev/legalize-es) | BOE |
+| Andorra | [legalize-ad](https://github.com/legalize-dev/legalize-ad) | BOPA |
+| Argentina | [legalize-ar](https://github.com/legalize-dev/legalize-ar) | InfoLEG |
+| Austria | [legalize-at](https://github.com/legalize-dev/legalize-at) | RIS (Bundeskanzleramt) |
+| Belgium | [legalize-be](https://github.com/legalize-dev/legalize-be) | Justel (Belgisch Staatsblad) |
+| Chile | [legalize-cl](https://github.com/legalize-dev/legalize-cl) | BCN (LeyChile) |
+| Czech Republic | [legalize-cz](https://github.com/legalize-dev/legalize-cz) | e-Sbirka |
+| Estonia | [legalize-ee](https://github.com/legalize-dev/legalize-ee) | Riigi Teataja |
 | France | [legalize-fr](https://github.com/legalize-dev/legalize-fr) | LEGI (Legifrance) |
 | Germany | [legalize-de](https://github.com/legalize-dev/legalize-de) | gesetze-im-internet.de |
-| Austria | [legalize-at](https://github.com/legalize-dev/legalize-at) | RIS (Bundeskanzleramt) |
+| Greece | [legalize-gr](https://github.com/legalize-dev/legalize-gr) | ET (Ethniko Typografeio) |
+| Italy | [legalize-it](https://github.com/legalize-dev/legalize-it) | Normattiva |
+| Latvia | [legalize-lv](https://github.com/legalize-dev/legalize-lv) | likumi.lv (Latvijas Vestnesis) |
+| Lithuania | [legalize-lt](https://github.com/legalize-dev/legalize-lt) | TAR (data.gov.lt) |
+| Netherlands | [legalize-nl](https://github.com/legalize-dev/legalize-nl) | BWB (wetten.overheid.nl) |
+| Poland | [legalize-pl](https://github.com/legalize-dev/legalize-pl) | Dziennik Ustaw (Sejm ELI) |
+| Portugal | [legalize-pt](https://github.com/legalize-dev/legalize-pt) | DRE (Diario da Republica) |
+| Spain | [legalize-es](https://github.com/legalize-dev/legalize-es) | BOE |
 | Sweden | [legalize-se](https://github.com/legalize-dev/legalize-se) | SFSR (Riksdag) |
-| Latvia | [legalize-lv](https://github.com/legalize-dev/legalize-lv) | likumi.lv (Latvijas Vēstnesis) |
+| Uruguay | [legalize-uy](https://github.com/legalize-dev/legalize-uy) | IMPO |
 
 ## Architecture
 
@@ -45,12 +58,22 @@ src/legalize/
       client.py             Riksdag API client
       discovery.py          SFS catalog discovery
       parser.py             Swedish XML -> Block/NormMetadata
+    ad/                   Andorra (BOPA)
+    ar/                   Argentina (InfoLEG)
     at/                   Austria (RIS OGD API)
+    be/                   Belgium (Justel)
     cl/                   Chile (BCN / LeyChile)
+    cz/                   Czech Republic (e-Sbirka)
+    ee/                   Estonia (Riigi Teataja)
+    gr/                   Greece (ET)
+    it/                   Italy (Normattiva AKN)
     lt/                   Lithuania (TAR / data.gov.lt)
-    pt/                   Portugal (DRE SQLite dump)
-    uy/                   Uruguay (IMPO)
     lv/                   Latvia (likumi.lv HTML scraping with sitemap discovery)
+    nl/                   Netherlands (BWB / wetten.overheid.nl)
+    pl/                   Poland (Dziennik Ustaw / Sejm ELI)
+    pt/                   Portugal (DRE SQLite dump)
+    ua/                   Ukraine (data.rada.gov.ua)
+    uy/                   Uruguay (IMPO)
   transformer/          # Generic: XML -> Markdown
     xml_parser.py         Bloque/Version extraction, reform timeline
     markdown.py           Bloque -> Markdown (CSS class mapping)
@@ -136,15 +159,26 @@ See [ADDING_A_COUNTRY.md](ADDING_A_COUNTRY.md) for the full walkthrough.
 
 | Country | Status | Source | Repo |
 |---------|--------|--------|------|
-| Spain | Live | [BOE](https://www.boe.es/) | [legalize-es](https://github.com/legalize-dev/legalize-es) |
+| Andorra | Live | [BOPA](https://www.bopa.ad/) | [legalize-ad](https://github.com/legalize-dev/legalize-ad) |
+| Argentina | Live | [InfoLEG](http://www.infoleg.gob.ar/) | [legalize-ar](https://github.com/legalize-dev/legalize-ar) |
+| Austria | Live | [RIS](https://www.ris.bka.gv.at/) | [legalize-at](https://github.com/legalize-dev/legalize-at) |
+| Belgium | Live | [Justel](https://www.ejustice.just.fgov.be/) | [legalize-be](https://github.com/legalize-dev/legalize-be) |
+| Chile | Fetcher ready | [BCN](https://www.leychile.cl/) | [legalize-cl](https://github.com/legalize-dev/legalize-cl) |
+| Czech Republic | Fetcher ready | [e-Sbirka](https://www.e-sbirka.cz/) | [legalize-cz](https://github.com/legalize-dev/legalize-cz) |
+| Estonia | Live | [Riigi Teataja](https://www.riigiteataja.ee/) | [legalize-ee](https://github.com/legalize-dev/legalize-ee) |
 | France | Live | [Legifrance](https://www.legifrance.gouv.fr/) | [legalize-fr](https://github.com/legalize-dev/legalize-fr) |
 | Germany | Live | [gesetze-im-internet.de](https://www.gesetze-im-internet.de/) | [legalize-de](https://github.com/legalize-dev/legalize-de) |
-| Austria | Live | [RIS](https://www.ris.bka.gv.at/) | [legalize-at](https://github.com/legalize-dev/legalize-at) |
+| Greece | Live | [ET](https://www.et.gr/) | [legalize-gr](https://github.com/legalize-dev/legalize-gr) |
+| Italy | Fetcher ready | [Normattiva](https://www.normattiva.it/) | [legalize-it](https://github.com/legalize-dev/legalize-it) |
+| Latvia | Live | [likumi.lv](https://likumi.lv/) | [legalize-lv](https://github.com/legalize-dev/legalize-lv) |
+| Lithuania | Live | [TAR](https://www.e-tar.lt/) | [legalize-lt](https://github.com/legalize-dev/legalize-lt) |
+| Netherlands | Live | [BWB](https://wetten.overheid.nl/) | [legalize-nl](https://github.com/legalize-dev/legalize-nl) |
+| Poland | Live | [Dziennik Ustaw](https://isap.sejm.gov.pl/) | [legalize-pl](https://github.com/legalize-dev/legalize-pl) |
+| Portugal | Live | [DRE](https://dre.pt/) | [legalize-pt](https://github.com/legalize-dev/legalize-pt) |
+| Spain | Live | [BOE](https://www.boe.es/) | [legalize-es](https://github.com/legalize-dev/legalize-es) |
 | Sweden | Live | [Riksdag](https://www.riksdagen.se/) | [legalize-se](https://github.com/legalize-dev/legalize-se) |
-| Chile | Fetcher ready | [BCN](https://www.leychile.cl/) | [legalize-cl](https://github.com/legalize-dev/legalize-cl) |
-| Lithuania | Fetcher ready | [TAR](https://www.e-tar.lt/) | [legalize-lt](https://github.com/legalize-dev/legalize-lt) |
-| Portugal | Fetcher ready | [DRE](https://dre.pt/) | [legalize-pt](https://github.com/legalize-dev/legalize-pt) |
-| Uruguay | Fetcher ready | [IMPO](https://www.impo.com.uy/) | [legalize-uy](https://github.com/legalize-dev/legalize-uy) |
+| Ukraine | Fetcher ready | [Rada](https://data.rada.gov.ua/) | -- |
+| Uruguay | Live | [IMPO](https://www.impo.com.uy/) | [legalize-uy](https://github.com/legalize-dev/legalize-uy) |
 
 Want to add your country? See [ADDING_A_COUNTRY.md](ADDING_A_COUNTRY.md).
 
