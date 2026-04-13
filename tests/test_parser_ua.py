@@ -93,8 +93,35 @@ class TestRadaTextParser:
         blocks = self.parser.parse_text(b"")
         assert blocks == []
 
-    def test_extract_reforms_empty(self):
+    def test_extract_reforms_constitution(self):
+        """Constitution has 7 amending laws in its annotation block."""
         reforms = self.parser.extract_reforms(_read("rada-constitution.txt"))
+        assert len(reforms) >= 7
+        # Reforms must be sorted chronologically
+        dates = [r.date for r in reforms]
+        assert dates == sorted(dates)
+        # First reform is law 2222-IV from 2004
+        assert reforms[0].norm_id == "2222-IV"
+        assert reforms[0].date == date(2004, 12, 8)
+
+    def test_extract_reforms_simple_law(self):
+        """Bio-safety law has 16+ amending laws."""
+        reforms = self.parser.extract_reforms(_read("rada-1103-16-law.txt"))
+        assert len(reforms) >= 16
+        dates = [r.date for r in reforms]
+        assert dates == sorted(dates)
+
+    def test_extract_reforms_deduplicates(self):
+        """Same law+date referenced in header and inline should appear once."""
+        reforms = self.parser.extract_reforms(_read("rada-1103-16-law.txt"))
+        seen = set()
+        for r in reforms:
+            key = (r.norm_id, r.date)
+            assert key not in seen, f"Duplicate reform: {r.norm_id} {r.date}"
+            seen.add(key)
+
+    def test_extract_reforms_empty_text(self):
+        reforms = self.parser.extract_reforms(b"")
         assert reforms == []
 
 

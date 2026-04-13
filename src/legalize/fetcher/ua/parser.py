@@ -17,7 +17,7 @@ import lxml.html
 
 from legalize.fetcher.base import MetadataParser, TextParser
 from legalize.fetcher.ua.discovery import nreg_to_identifier
-from legalize.models import Block, NormMetadata, NormStatus, Paragraph, Rank, Version
+from legalize.models import Block, NormMetadata, NormStatus, Paragraph, Rank, Reform, Version
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +98,12 @@ _VID_DATE_RE = re.compile(r"від\s+(\d{1,2})\s+(\w+)\s+(\d{4})\s+р\b", re.UNI
 
 # Dotted date in text: "12.08.1987"
 _DOTTED_DATE_IN_TEXT_RE = re.compile(r"\b(\d{2})\.(\d{2})\.(\d{4})\b")
+
+# Amendment reference: "№ 2222-IV від 08.12.2004" or "№ 1804-VI від 19.01.2010"
+_AMENDMENT_REF_RE = re.compile(
+    r"№\s+([\w/\-]+(?:-[IVXLCDM]+)?)\s+від\s+(\d{2})\.(\d{2})\.(\d{4})",
+    re.UNICODE,
+)
 
 
 def _try_ua_date(day: int, month_name: str, year: int) -> date | None:
@@ -442,8 +448,68 @@ class RadaTextParser(TextParser):
         return blocks
 
     def extract_reforms(self, data: bytes) -> list[Any]:
-        """No amendment history in v1 — single snapshot."""
-        return []
+        """Extract reform timeline from amendment annotations in the text.
+
+        Ukrainian laws include editorial annotations listing every amending
+        law with its date, e.g.:
+
+            {Із змінами, внесеними згідно із Законами
+            № 2222-IV від 08.12.2004, ВВР, 2005, № 2, ст.44
+            № 2952-VI від 01.02.2011, ВВР, 2011, № 10, ст.68}
+
+        Also inline per-article annotations like:
+            {Статтю 1 доповнено абзацом згідно із Законом № 4441-VI від 23.02.2012}
+
+        We only extract from annotations that mention "згідно із Закон"
+        (amended according to Law), filtering out Constitutional Court
+        interpretation references ("Офіційне тлумачення", "Рішенн").
+
+        Returns Reform objects sorted chronologically, deduplicated by
+        (source_law, date) pairs.
+        """
+        try:
+            text = data.decode("utf-8")
+        except UnicodeDecodeError:
+            text = data.decode("cp1251", errors="replace")
+
+        # Collect all {annotation} blocks, including multi-line ones
+        annotation_blocks: list[str] = []
+        in_block = False
+        current: list[str] = []
+        for line in text.splitlines():
+            stripped = line.strip()
+            if stripped.startswith("{"):
+                in_block = True
+                current = [stripped]
+                if stripped.endswith("}"):
+                    annotation_blocks.append(" ".join(current))
+                    in_block = False
+            elif in_block:
+                current.append(stripped)
+                if stripped.endswith("}"):
+                    annotation_blocks.append(" ".join(current))
+                    in_block = False
+
+        seen: set[tuple[str, date]] = set()
+        reforms: list[Reform] = []
+
+        for block in annotation_blocks:
+            # Only process blocks that reference amending laws
+            if "згідно із Закон" not in block and "редакції Закону" not in block:
+                continue
+            for m in _AMENDMENT_REF_RE.finditer(block):
+                law_num = m.group(1)
+                try:
+                    d = date(int(m.group(4)), int(m.group(3)), int(m.group(2)))
+                except ValueError:
+                    continue
+                key = (law_num, d)
+                if key not in seen:
+                    seen.add(key)
+                    reforms.append(Reform(date=d, norm_id=law_num, affected_blocks=()))
+
+        reforms.sort(key=lambda r: r.date)
+        return reforms
 
 
 # ─────────────────────────────────────────────
