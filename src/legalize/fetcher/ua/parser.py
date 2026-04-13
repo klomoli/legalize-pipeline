@@ -249,9 +249,23 @@ class RadaTextParser(TextParser):
         pub_date = _extract_date_from_text(text) or date(1991, 8, 24)
         norm_id = ""
 
+        # Track multi-line annotation blocks {... \n ... \n ...}
+        in_annotation = False
+
         for line in lines:
             stripped = line.strip()
             if not stripped:
+                continue
+
+            # Skip multi-line annotation blocks
+            if stripped.startswith("{") and stripped.endswith("}"):
+                continue  # single-line annotation
+            if stripped.startswith("{"):
+                in_annotation = True
+                continue
+            if in_annotation:
+                if stripped.endswith("}"):
+                    in_annotation = False
                 continue
 
             # Check structural patterns
