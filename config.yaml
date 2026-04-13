@@ -25,7 +25,7 @@ countries:
     repo_path: "../countries/ar"
     data_dir: "../countries/data-ar"
     cache_dir: ".cache"
-    max_workers: 2
+    max_workers: 4
     source:
       base_url: "http://servicios.infoleg.gob.ar/infolegInternet"
       catalog_url: "https://datos.jus.gob.ar/dataset/d9a963ea-8b1d-4ca3-9dd9-07a4773e8c23/resource/bf0ec116-ad4e-4572-a476-e57167a84403/download/base-infoleg-normativa-nacional.zip"
@@ -266,6 +266,20 @@ countries:
       # reflects each real reform. Set to false for a lightweight bootstrap
       # that only commits the current state.
       include_history: true
+
+  "no":
+    repo_path: "../countries/no"
+    data_dir: "../countries/data-no"
+    # Single-threaded: the public data dump is a single archive download,
+    # not per-law HTTP requests. Bootstrap processes 781 files locally.
+    max_workers: 1
+    source:
+      # Lovdata public data API — no authentication required.
+      # License: NLOD 2.0 (Norwegian Licence for Open Government Data).
+      # Downloads gjeldende-lover.tar.bz2 (~5.6 MB, 781 current laws).
+      # Historical versions require authenticated API (pending API key
+      # request to api@lovdata.no — see RESEARCH-NO.md).
+      api_base: "https://api.lovdata.no/v1/publicData"
 
   be:
     repo_path: "../countries/be"
