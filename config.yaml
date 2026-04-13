@@ -308,3 +308,16 @@ countries:
       request_timeout: 30
       max_retries: 3
       requests_per_second: 5.0
+
+  ua:
+    repo_path: "../countries/ua"
+    data_dir: "../countries/data-ua"
+    max_workers: 1
+    source:
+      base_url: "https://data.rada.gov.ua"
+      zakon_base_url: "https://zakon.rada.gov.ua"
+      request_timeout: 30
+      max_retries: 5
+      requests_per_second: 1.0
+      type_lists: ["t1", "t3", "t4", "t5", "t21", "t216"]
+      include_perv1: true
