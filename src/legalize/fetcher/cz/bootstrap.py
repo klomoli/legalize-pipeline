@@ -23,6 +23,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
@@ -351,8 +352,10 @@ def _commit_law(repo: GitRepo, law: _PreparedLaw) -> int:
     commits = 0
     for i, version in enumerate(law.versions):
         changed = repo.write_and_add(law.file_path, version.markdown)
-        if not changed and i > 0:
-            # No text difference from previous version — skip
+        if not changed:
+            # No text difference from previous version (or file already
+            # exists with same content from a prior run) — skip to avoid
+            # empty commit error.
             continue
 
         if i == 0:
@@ -373,8 +376,11 @@ def _commit_law(repo: GitRepo, law: _PreparedLaw) -> int:
             law.file_path,
             version.markdown,
         )
-        sha = repo.commit(info)
-        if sha:
-            commits += 1
+        try:
+            sha = repo.commit(info)
+            if sha:
+                commits += 1
+        except subprocess.CalledProcessError:
+            logger.debug("Commit skipped for %s (nothing to commit)", law.file_path)
 
     return commits
