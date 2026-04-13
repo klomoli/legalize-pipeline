@@ -270,7 +270,7 @@ def generic_fetch_one(
                 get_text_kwargs["meta_data"] = meta_data
             text_data = client.get_text(norm_id, **get_text_kwargs)
             blocks = text_parser.parse_text(text_data)
-            reforms = _extract_reforms_generic(text_parser, client, norm_id, blocks)
+            reforms = _extract_reforms_generic(text_parser, client, norm_id, blocks, text_data)
 
             # Suvestine: replace blocks + reforms with versioned historical data
             if hasattr(text_parser, "parse_suvestine") and hasattr(client, "get_suvestine"):
@@ -451,11 +451,13 @@ def generic_bootstrap(
     return total_commits
 
 
-def _extract_reforms_generic(text_parser, client, norm_id, blocks):
+def _extract_reforms_generic(text_parser, client, norm_id, blocks, text_data=None):
     """Extract reforms, with country-specific hooks.
 
-    Swedish parser has extract_reforms_from_sfsr for the SFSR amendment register.
-    Falls back to generic extract_reforms() from blocks.
+    Priority order:
+    1. Swedish SFSR amendment register (extract_reforms_from_sfsr)
+    2. Parser-level extract_reforms(text_data) — e.g. UA amendment annotations
+    3. Generic block-based extract_reforms(blocks) from transformer
     """
     if hasattr(text_parser, "extract_reforms_from_sfsr") and hasattr(
         client, "get_amendment_register"
@@ -468,6 +470,13 @@ def _extract_reforms_generic(text_parser, client, norm_id, blocks):
                 "Amendment register unavailable for %s, using text-based reforms",
                 norm_id,
             )
+
+    # Try parser-level reform extraction from raw text (e.g. UA annotations)
+    if text_data is not None and hasattr(text_parser, "extract_reforms"):
+        parser_reforms = text_parser.extract_reforms(text_data)
+        if parser_reforms:
+            return parser_reforms
+
     return extract_reforms(blocks)
 
 
