@@ -81,11 +81,7 @@ def finalize_daily(
     Call this at the end of any daily() function (generic or custom).
     """
     if not dry_run and push and commits_created > 0:
-        try:
-            repo.push()
-        except subprocess.CalledProcessError:
-            logger.error("Error pushing", exc_info=True)
-            errors.append("Error pushing")
+        repo.push()
 
     state.record_run(
         summaries=[d.isoformat() for d in dates_to_process],

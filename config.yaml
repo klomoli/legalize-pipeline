@@ -144,6 +144,40 @@ countries:
       max_retries: 5
       requests_per_second: 2.0
 
+  lu:
+    repo_path: "../countries/lu"
+    data_dir: "../countries/data-lu"
+    cache_dir: ".cache"
+    # Legilux open data: SPARQL (discovery) + filestore (XML downloads).
+    # No documented rate limits. Benchmarked 2026-04-13: server handles
+    # 150+ req/s without errors. XML URLs derived deterministically from
+    # ELI (no per-norm SPARQL needed for download). Only consolidation
+    # queries hit SPARQL (~1,317 laws have history).
+    #
+    # Benchmark (50 laws, filestore GET):
+    #   1w  → 20 req/s (HTTP latency bound)
+    #   4w  → 67 req/s
+    #   8w  → 112 req/s
+    #  12w  → 153 req/s (zero errors at all levels)
+    #
+    # Settled on 8w × 10 req/s = polite but fast.
+    # Full bootstrap (~24K acts + ~4K consolidation XMLs):
+    #   downloads: ~28K files / ~80 eff req/s → ~6 min
+    #   SPARQL consolidation queries: ~24K / ~10 q/s → ~40 min
+    #   parsing + commits: ~30 min
+    #   Total: ~1.5h
+    max_workers: 8
+    source:
+      sparql_url: "https://data.legilux.public.lu/sparqlendpoint"
+      filestore_url: "https://data.legilux.public.lu/filestore"
+      request_timeout: 30
+      max_retries: 5
+      requests_per_second: 10.0
+      doc_types:
+        - "LOI"
+        - "RGD"
+        - "Constitution"
+
   pt:
     repo_path: "../countries/pt"
     data_dir: "../countries/data-pt"
@@ -152,6 +186,16 @@ countries:
       # Download SQLite dump from https://uploads.tretas.org/
       # Decompress: bunzip2 YYYY-MM-DD-DRE.sqlite3.bz2
       db_path: "../countries/data-pt/2026-03-01-DRE.sqlite3"
+
+  ro:
+    repo_path: "../countries/ro"
+    data_dir: "../countries/data-ro"
+    max_workers: 8
+    source:
+      base_url: "https://legislatie.just.ro"
+      requests_per_second: 2.0
+      request_timeout: 60
+      max_retries: 5
 
   uy:
     repo_path: "../countries/uy"
@@ -347,23 +391,57 @@ countries:
     data_dir: "../countries/data-fi"
     cache_dir: ".cache"
     # Finlex API: public REST, no auth, returns 429 on overload.
-    # No published rate limit. Discovery: 10 items/page, ~4,250 pages.
-    # Each law: 1 listing req + 1 XML req per version.
-    #
     # Benchmark 2026-04-13 (50 acts, metadata + text, 2 reqs/law):
     #   1w × 1.0 r/s → 0.63 laws/s (0 errors)
-    #   4w × 2.0 r/s → 1.25 laws/s (0 errors)
-    #   8w × 4.0 r/s → 2.46 laws/s (0 errors) — polite default
+    #   8w × 4.0 r/s → 2.46 laws/s (0 errors)
     #   8w × 8.0 r/s → 4.72 laws/s (0 errors)
-    #  16w × 16  r/s → 8.96 laws/s (0 errors) — no rate limit hit
-    # Zero 429/5xx at every rate tested on per-law endpoints.
-    # BUT the /list endpoint (discovery) rate-limits at ~4 req/s
-    # (429 at page 244 of 4,250 with 4.0 r/s, 2026-04-13).
-    # Use 1.5 r/s for safe discovery pacing.
-    # Full bootstrap (~42K laws): ~8-10h at 4w × 1.5 r/s.
+    #  16w × 16  r/s → 8.96 laws/s (0 errors)
+    # Discovery /list endpoint rate-limits at ~4 req/s → use 1.5 r/s.
+    # Full bootstrap (~27K laws): ~8-10h at 4w × 1.5 r/s.
     max_workers: 4
     source:
       api_base: "https://opendata.finlex.fi/finlex/avoindata/v1"
       request_timeout: 30
       max_retries: 5
       requests_per_second: 1.5
+
+  sk:
+    repo_path: "../countries/sk"
+    data_dir: "../countries/data-sk"
+    cache_dir: ".cache"
+    # Slov-Lex static site + API gateway. No documented rate limits.
+    # Response time ~50ms. No auth required. Zero 429/5xx observed in testing.
+    # Each law requires 1 history page + N version portal fragments.
+    # Full bootstrap (~26K laws × ~3-5 versions avg): ~80K-130K requests.
+    # At 4 workers × 2 req/s = 8 req/s → ~4-5h fetch time.
+    max_workers: 4
+    source:
+      api_base: "https://api-gateway.slov-lex.sk"
+      static_base: "https://static.slov-lex.sk"
+      request_timeout: 30
+      max_retries: 5
+      requests_per_second: 2.0
+
+  eu:
+    repo_path: "../countries/eu"
+    data_dir: "../countries/data-eu"
+    cache_dir: ".cache"
+    # CELLAR SPARQL + REST API. Public, no auth. Virtuoso backend
+    # with 60-second query timeout. No documented rate limits, but
+    # recommended to stay under 5 concurrent connections per IP.
+    # Discovery: ~16K in-force regulations via paged SPARQL (~16 pages × 400ms).
+    # Text: XHTML consolidated texts via CELLAR REST (~450KB-4.6MB each).
+    # Each regulation needs: 1 SPARQL (consolidations) + N XHTML downloads.
+    # Full bootstrap (~16K regs × ~2 consolidations avg): ~48K requests.
+    # At 4 workers × 2 req/s = 8 req/s → ~1.5-2h fetch time.
+    max_workers: 4
+    source:
+      sparql_url: "https://publications.europa.eu/webapi/rdf/sparql"
+      request_timeout: 30
+      max_retries: 5
+      requests_per_second: 2.0
+      reg_types:
+        - "REG"
+        - "REG_IMPL"
+        - "REG_DEL"
+        - "REG_FINANC"
