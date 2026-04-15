@@ -56,6 +56,9 @@ class LegiluxDiscovery(NormDiscovery):
         timeout errors on large OFFSET values (the endpoint returns 500
         above ~10K offset). Within each type, uses cursor-based pagination
         with ``FILTER (?act > <last_uri>)`` for robust paging.
+
+        Only returns acts that have an XML manifestation in the filestore.
+        ~20% of old laws (pre-1900) only have PDF.
         """
         if not isinstance(client, LegiluxClient):
             raise TypeError(f"Expected LegiluxClient, got {type(client).__name__}")
@@ -70,9 +73,6 @@ class LegiluxDiscovery(NormDiscovery):
 
             while True:
                 cursor_filter = f"FILTER (?act > <{cursor}>)" if cursor else ""
-                # Only discover acts that have an XML manifestation in the
-                # filestore. ~20% of old laws (pre-1900) have no XML, so
-                # filtering here avoids thousands of 404 errors during fetch.
                 query = f"""PREFIX jolux: <http://data.legilux.public.lu/resource/ontology/jolux#>
 SELECT DISTINCT ?act WHERE {{
   GRAPH ?g {{
