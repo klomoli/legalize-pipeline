@@ -30,9 +30,13 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# atom:id carries the abstract law URI, e.g.
-#   http://www.legislation.gov.uk/id/ukpga/2018/12
-_ID_RE = re.compile(r"/id/(?P<type>[a-z]+)/(?P<year>\d{4})/(?P<number>\d+)")
+# atom:id carries two different shapes depending on the feed:
+#   per-year feed:   http://www.legislation.gov.uk/id/ukpga/2018/12
+#   update feed:     http://www.legislation.gov.uk/ukpga/1992/12/1993-11-30/data.xml/published/...
+# The optional ``id/`` segment covers both.
+_ID_RE = re.compile(
+    r"legislation\.gov\.uk/(?:id/)?(?P<type>[a-z]+)/(?P<year>\d{4})/(?P<number>\d+)"
+)
 
 # The per-year feed bounds. legislation.gov.uk hosts ukpga back to 1266 but
 # modern schema coverage is post-1988. We still iterate from 1801 so that
