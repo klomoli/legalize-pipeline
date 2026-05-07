@@ -1,0 +1,25 @@
+# OpoLex-specific config for legalize-pipeline. Only Spain is enabled; all
+# other countries are intentionally absent (the pipeline errors if asked to
+# run them with this config).
+#
+# Usage:
+#   legalize daily -c es --config config-opolex.yaml
+
+git:
+  committer_name: "opolex-bot"
+  committer_email: "bot@opolex.app"
+  branch: "main"
+  push: false   # the GitHub Action does the push step explicitly
+
+countries:
+  es:
+    repo_path: "../opolex-laws-es"
+    data_dir: "data-es"
+    cache_dir: ".cache"
+    max_workers: 1
+    source:
+      base_url: "https://www.boe.es/datosabiertos"
+      request_timeout: 30
+      max_retries: 5
+      requests_per_second: 4.0
+      user_agent: "opolex-bot/1.0 (+https://github.com/klomoli/opolex)"
