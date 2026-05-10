@@ -40,7 +40,7 @@ jobs:
           GIT_AUTHOR_NAME:  ${{ vars.OPOLEX_BOT_NAME }}
           GIT_AUTHOR_EMAIL: ${{ vars.OPOLEX_BOT_EMAIL }}
         run: |
-          legalize daily -c es --config config-opolex.yaml
+          legalize --config config-opolex.yaml daily -c es
 
       - name: push if changed
         working-directory: opolex-laws-es
